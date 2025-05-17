@@ -26,23 +26,23 @@ Attierly is an advanced AI fashion assistant that uses computer vision and machi
 ## UI Showcase
 
 ### Chat Interface
-![Chat Interface](demo_screenshots/chat_image_upload.png)
+![Chat Interface](https://raw.githubusercontent.com/GvsSriRam/Attierly/main/demo_screenshots/chat_image_upload.png)
 *Upload clothing items and get instant outfit recommendations with AI-powered style advice*
 
 ### Outfit Recommendations
-![Outfit Recommendations](demo_screenshots/chat_response_1_1.png)
+![Outfit Recommendations](https://raw.githubusercontent.com/GvsSriRam/Attierly/main/demo_screenshots/chat_response_1_1.png)
 *Personalized outfit combinations created from your wardrobe items*
 
 ### Purchase Recommendations
-![Purchase Recommendations](demo_screenshots/chat_response_1_2.png)
+![Purchase Recommendations](https://raw.githubusercontent.com/GvsSriRam/Attierly/main/demo_screenshots/chat_response_1_2.png)
 *Smart suggestions for new items that complement your existing wardrobe*
 
 ### Interactive Conversations
-![Interactive Conversations](demo_screenshots/chat_response_2.png)
+![Interactive Conversations](https://raw.githubusercontent.com/GvsSriRam/Attierly/main/demo_screenshots/chat_response_2.png)
 *Natural conversation flow for specific style inquiries and personalized recommendations*
 
 ### Wardrobe Management
-![Wardrobe Management](demo_screenshots/wardrobe.png)
+![Wardrobe Management](https://raw.githubusercontent.com/GvsSriRam/Attierly/main/demo_screenshots/wardrobe.png)
 *Organize, filter, and manage your clothing items in a visual interface*
 
 ## Technical Implementation
