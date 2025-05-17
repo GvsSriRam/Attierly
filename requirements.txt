@@ -1,0 +1,11 @@
+tensorflow
+pandas
+numpy
+Pillow
+Flask
+google-generativeai
+python-dotenv
+scikit-learn # Needed for train_test_split
+langchain
+langchain-google-genai
+langchain-core # Often a core dependency

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attierly - Wardrobe Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+        .navbar {
+            background-color: #6c5ce7;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+            letter-spacing: 1px;
+        }
+        .container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-img-top {
+            height: 220px;
+            object-fit: cover;
+        }
+        .wardrobe-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .category-filter {
+            margin-bottom: 1.5rem;
+        }
+        .upload-area {
+            border: 2px dashed #6c5ce7;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            background-color: rgba(108, 92, 231, 0.05);
+        }
+        .btn-primary {
+            background-color: #6c5ce7;
+            border-color: #6c5ce7;
+        }
+        .btn-primary:hover {
+            background-color: #5b4cc4;
+            border-color: #5b4cc4;
+        }
+        .image-upload-input {
+            display: none;
+        }
+        .metadata-form {
+            display: none;
+            margin-top: 1rem;
+        }
+        .color-indicator {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        .filter-btn {
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            background-color: #f1f3f9;
+            color: #495057;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+        }
+        .filter-btn.active {
+            background-color: #6c5ce7;
+            color: white;
+        }
+        .loading-indicator {
+            display: none;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        .loading-indicator .spinner-border {
+            color: #6c5ce7;
+            margin-right: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Attierly</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white active" href="/wardrobe">My Wardrobe</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/">Chat with Flair</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="wardrobe-header">
+            <h1 class="mb-0">My Wardrobe</h1>
+            <button class="btn btn-primary" id="addItemBtn">Add New Item</button>
+        </div>
+
+        <div class="upload-area" id="uploadArea" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#6c5ce7" class="bi bi-cloud-arrow-up-fill mb-3" viewBox="0 0 16 16">
+                <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 5.146a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2z"/>
+            </svg>
+            <h5>Upload a clothing item</h5>
+            <p class="text-muted">Click to select or drag and drop an image</p>
+            <input type="file" id="imageUpload" class="image-upload-input" accept="image/*">
+        </div>
+        
+        <div class="metadata-form" id="metadataForm">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Item Details</h5>
+                    <form id="itemDetailsForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="itemColor" class="form-label">Color</label>
+                                <select class="form-select" id="itemColor" required>
+                                    <option value="" selected disabled>Select color</option>
+                                    <option value="Blue">Blue</option>
+                                    <option value="Black">Black</option>
+                                    <option value="White">White</option>
+                                    <option value="Red">Red</option>
+                                    <option value="Green">Green</option>
+                                    <option value="Yellow">Yellow</option>
+                                    <option value="Purple">Purple</option>
+                                    <option value="Brown">Brown</option>
+                                    <option value="Gray">Gray</option>
+                                    <option value="Pink">Pink</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="itemCategory" class="form-label">Category</label>
+                                <select class="form-select" id="itemCategory" required>
+                                    <option value="" selected disabled>Select category</option>
+                                    <option value="Tshirts">T-shirt</option>
+                                    <option value="Shirts">Shirt</option>
+                                    <option value="Jeans">Jeans</option>
+                                    <option value="Casual Shoes">Casual Shoes</option>
+                                    <option value="Skirts">Skirt</option>
+                                    <option value="Heels">Heels</option>
+                                    <option value="Jackets">Jacket</option>
+                                    <option value="Dresses">Dress</option>
+                                    <option value="Pants">Pants</option>
+                                    <option value="Sweaters">Sweater</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="itemUsage" class="form-label">Usage</label>
+                                <select class="form-select" id="itemUsage" required>
+                                    <option value="" selected disabled>Select usage</option>
+                                    <option value="Casual">Casual</option>
+                                    <option value="Formal">Formal</option>
+                                    <option value="Party">Party</option>
+                                    <option value="Sports">Sports</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="itemDescription" class="form-label">Description (optional)</label>
+                                <input type="text" class="form-control" id="itemDescription" placeholder="E.g., Favorite blue t-shirt">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-outline-secondary me-2" id="cancelUploadBtn">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Item</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="category-filter">
+            <h5 class="mb-3">Filter by Category</h5>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-category="all">All</button>
+                <!-- Category buttons will be dynamically added here -->
+            </div>
+        </div>
+
+        <div class="loading-indicator" id="loadingIndicator">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <span>Loading your wardrobe...</span>
+        </div>
+
+        <div class="row" id="wardrobeItems">
+            <!-- Wardrobe items will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const wardrobeItems = document.getElementById('wardrobeItems');
+            const uploadArea = document.getElementById('uploadArea');
+            const imageUpload = document.getElementById('imageUpload');
+            const metadataForm = document.getElementById('metadataForm');
+            const addItemBtn = document.getElementById('addItemBtn');
+            const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+            const itemDetailsForm = document.getElementById('itemDetailsForm');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const filterButtons = document.querySelector('.filter-buttons');
+            
+            let uploadedFile = null;
+            let categories = new Set(['all']);
+            let currentFilter = 'all';
+            
+            // Toggle upload area
+            addItemBtn.addEventListener('click', function() {
+                uploadArea.style.display = uploadArea.style.display === 'none' ? 'block' : 'none';
+                metadataForm.style.display = 'none';
+            });
+            
+            // Cancel upload
+            cancelUploadBtn.addEventListener('click', function() {
+                uploadArea.style.display = 'none';
+                metadataForm.style.display = 'none';
+                uploadedFile = null;
+            });
+            
+            // Upload area click handler
+            uploadArea.addEventListener('click', function() {
+                imageUpload.click();
+            });
+            
+            // Handle image upload
+            imageUpload.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    uploadedFile = this.files[0];
+                    uploadArea.style.display = 'none';
+                    metadataForm.style.display = 'block';
+                }
+            });
+            
+            // Handle item details form submission
+            itemDetailsForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!uploadedFile) {
+                    alert('Please upload an image first');
+                    return;
+                }
+                
+                const color = document.getElementById('itemColor').value;
+                const category = document.getElementById('itemCategory').value;
+                const usage = document.getElementById('itemUsage').value;
+                const description = document.getElementById('itemDescription').value || `${color} ${category}`;
+                
+                // Create filename based on metadata: color_category_usage.jpg
+                const fileExtension = uploadedFile.name.split('.').pop();
+                const newFilename = `${color.toLowerCase()}_${category.toLowerCase()}_${usage.toLowerCase()}.${fileExtension}`;
+                
+                // Create FormData
+                const formData = new FormData();
+                
+                // Create a new file with the formatted name
+                const renamedFile = new File([uploadedFile], newFilename, {
+                    type: uploadedFile.type,
+                    lastModified: uploadedFile.lastModified
+                });
+                
+                formData.append('file', renamedFile);
+                formData.append('color', color);
+                formData.append('category', category);
+                formData.append('usage', usage);
+                formData.append('description', description);
+                
+                // In a real app, you would send this to the server
+                // For this demo, we'll simulate adding it to the wardrobe
+                simulateUpload(formData);
+            });
+            
+            // Simulate server upload and add to wardrobe
+            function simulateUpload(formData) {
+                // Hide form
+                metadataForm.style.display = 'none';
+                
+                // In a real app, send this to the server with fetch
+                // For demo, we'll just add it to the wardrobe immediately
+                
+                // Create a file reader to get the image data
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const file = formData.get('file');
+                    const color = formData.get('color');
+                    const category = formData.get('category');
+                    const usage = formData.get('usage');
+                    const description = formData.get('description');
+                    
+                    // Create a new random ID
+                    const newId = Math.floor(1000 + Math.random() * 9000);
+                    
+                    // Add to categories
+                    categories.add(category);
+                    updateCategoryFilters();
+                    
+                    // Add to wardrobe (in a real app, this would come from the server)
+                    const newItem = {
+                        id: newId,
+                        category: category,
+                        color: color,
+                        usage: usage,
+                        description: description,
+                        image: URL.createObjectURL(file)
+                    };
+                    
+                    // Add the item to the wardrobe display
+                    addItemToWardrobe(newItem);
+                    
+                    // Reset uploaded file
+                    uploadedFile = null;
+                };
+                
+                reader.readAsDataURL(formData.get('file'));
+            }
+            
+            // Add item to wardrobe display
+            function addItemToWardrobe(item) {
+                const col = document.createElement('div');
+                col.className = 'col-lg-3 col-md-4 col-sm-6 wardrobe-item';
+                col.dataset.category = item.category;
+                
+                // Apply filter
+                if (currentFilter !== 'all' && item.category !== currentFilter) {
+                    col.style.display = 'none';
+                }
+                
+                col.innerHTML = `
+                    <div class="card">
+                        <img src="${item.image}" class="card-img-top" alt="${item.description}">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <span class="color-indicator" style="background-color: ${getColorHex(item.color)}"></span>
+                                ${item.description}
+                            </h5>
+                            <p class="card-text text-muted">
+                                ${item.category} &bull; ${item.usage}
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">ID: ${item.id}</small>
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                wardrobeItems.appendChild(col);
+            }
+            
+            // Update category filters
+            function updateCategoryFilters() {
+                filterButtons.innerHTML = '';
+                
+                // Add All button
+                const allBtn = document.createElement('button');
+                allBtn.className = `filter-btn ${currentFilter === 'all' ? 'active' : ''}`;
+                allBtn.dataset.category = 'all';
+                allBtn.textContent = 'All';
+                allBtn.addEventListener('click', filterWardrobeItems);
+                filterButtons.appendChild(allBtn);
+                
+                // Add category buttons
+                categories.forEach(category => {
+                    if (category === 'all') return;
+                    
+                    const btn = document.createElement('button');
+                    btn.className = `filter-btn ${currentFilter === category ? 'active' : ''}`;
+                    btn.dataset.category = category;
+                    btn.textContent = category;
+                    btn.addEventListener('click', filterWardrobeItems);
+                    filterButtons.appendChild(btn);
+                });
+            }
+            
+            // Filter wardrobe items
+            function filterWardrobeItems(e) {
+                // Update current filter
+                currentFilter = this.dataset.category;
+                
+                // Update active button
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Filter items
+                document.querySelectorAll('.wardrobe-item').forEach(item => {
+                    if (currentFilter === 'all' || item.dataset.category === currentFilter) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Get hex color from name
+            function getColorHex(colorName) {
+                const colorMap = {
+                    'Blue': '#3498db',
+                    'Black': '#2c3e50',
+                    'White': '#ecf0f1',
+                    'Red': '#e74c3c',
+                    'Green': '#2ecc71',
+                    'Yellow': '#f1c40f',
+                    'Purple': '#9b59b6',
+                    'Brown': '#a0522d',
+                    'Gray': '#95a5a6',
+                    'Pink': '#fd79a8'
+                };
+                
+                return colorMap[colorName] || '#777777';
+            }
+            
+            // Load wardrobe items from server
+            function loadWardrobeItems() {
+                loadingIndicator.style.display = 'flex';
+                
+                // In a real application, fetch from the server
+                fetch('/api/wardrobe')
+                    .then(response => response.json())
+                    .then(items => {
+                        loadingIndicator.style.display = 'none';
+                        
+                        if (items.length === 0) {
+                            // Show empty state
+                            wardrobeItems.innerHTML = `
+                                <div class="col-12 text-center py-5">
+                                    <h4 class="text-muted">Your wardrobe is empty</h4>
+                                    <p>Add your first item to get started!</p>
+                                    <button class="btn btn-primary mt-3" id="emptyStateAddBtn">Add Item</button>
+                                </div>
+                            `;
+                            
+                            document.getElementById('emptyStateAddBtn').addEventListener('click', function() {
+                                uploadArea.style.display = 'block';
+                            });
+                            
+                            return;
+                        }
+                        
+                        // Add categories to filter
+                        items.forEach(item => {
+                            categories.add(item.category);
+                            
+                            // Convert server image path to actual URL
+                            item.image = item.image.startsWith('http') ? 
+                                item.image : 
+                                `/static/wardrobe/${item.image}`;
+                            
+                            // Add item to wardrobe
+                            addItemToWardrobe(item);
+                        });
+                        
+                        // Update category filters
+                        updateCategoryFilters();
+                    })
+                    .catch(error => {
+                        console.error('Error loading wardrobe items:', error);
+                        loadingIndicator.style.display = 'none';
+                        
+                        // Show error state
+                        wardrobeItems.innerHTML = `
+                            <div class="col-12 text-center py-5">
+                                <h4 class="text-danger">Error loading wardrobe</h4>
+                                <p>Please try again later</p>
+                                <button class="btn btn-primary mt-3" id="retryBtn">Retry</button>
+                            </div>
+                        `;
+                        
+                        document.getElementById('retryBtn').addEventListener('click', loadWardrobeItems);
+                    });
+            }
+            
+            // Load wardrobe items on page load
+            loadWardrobeItems();
+            
+            // Add drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                uploadArea.classList.add('bg-light');
+            }
+
+            function unhighlight() {
+                uploadArea.classList.remove('bg-light');
+            }
+
+            uploadArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files && files.length > 0) {
+                    uploadedFile = files[0];
+                    uploadArea.style.display = 'none';
+                    metadataForm.style.display = 'block';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

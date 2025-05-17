@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attierly - Style History</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/theme.css" rel="stylesheet">
+    <style>
+        .style-history-container {
+            padding: 2rem 0;
+        }
+        .history-card {
+            margin-bottom: 2rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .history-date {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        .history-content {
+            padding: 1rem;
+        }
+        .history-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+        .history-item {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--primary-light);
+            position: relative;
+        }
+        .history-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .history-item .item-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(139, 69, 19, 0.7);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 4px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .outfit-container {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1rem;
+            margin: 1rem 0;
+        }
+        .outfit-title {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        .purchase-item {
+            margin-bottom: 0.5rem;
+            padding-left: 0.5rem;
+            border-left: 2px solid var(--primary-light);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Attierly</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/wardrobe">My Wardrobe</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/style-history">Style History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Chat with Flair</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container style-history-container">
+        <h1 class="mb-4">Your Style History</h1>
+        <p class="text-muted mb-4">Keep track of your past outfit suggestions and fashion advice.</p>
+        
+        <!-- Example history entries -->
+        <div class="history-card">
+            <div class="history-date">May 17, 2023</div>
+            <div class="history-content">
+                <h5>Casual Friday Outfit Suggestions</h5>
+                <p>You asked for outfit recommendations for a casual Friday at work.</p>
+                
+                <div class="outfit-container">
+                    <div class="outfit-title">Outfit 1: Casual & Chic</div>
+                    <p>Green Skirts (id=1011) + Green Shirts (id=1014) + Brown Casual Shoes (id=1009)</p>
+                    <div class="history-items">
+                        <div class="history-item">
+                            <img src="/static/wardrobe/green_skirts_casual.jpg" alt="Green Skirts">
+                            <div class="item-label">Green Skirts</div>
+                        </div>
+                        <div class="history-item">
+                            <img src="/static/wardrobe/green_shirts_casual.jpg" alt="Green Shirts">
+                            <div class="item-label">Green Shirts</div>
+                        </div>
+                        <div class="history-item">
+                            <img src="/static/wardrobe/brown_casualshoes_casual.jpg" alt="Brown Casual Shoes">
+                            <div class="item-label">Brown Shoes</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="outfit-container">
+                    <div class="outfit-title">Outfit 2: Layered Look</div>
+                    <p>Green Skirts (id=1011) + Green Jackets (id=1005) + White Shirts (id=1000) + Brown Casual Shoes (id=1009)</p>
+                    <div class="history-items">
+                        <div class="history-item">
+                            <img src="/static/wardrobe/green_skirts_casual.jpg" alt="Green Skirts">
+                            <div class="item-label">Green Skirts</div>
+                        </div>
+                        <div class="history-item">
+                            <img src="/static/wardrobe/green_jackets_casual.jpg" alt="Green Jackets">
+                            <div class="item-label">Green Jackets</div>
+                        </div>
+                        <div class="history-item">
+                            <img src="/static/wardrobe/white_shirts_formal.jpg" alt="White Shirts">
+                            <div class="item-label">White Shirts</div>
+                        </div>
+                        <div class="history-item">
+                            <img src="/static/wardrobe/brown_casualshoes_casual.jpg" alt="Brown Casual Shoes">
+                            <div class="item-label">Brown Shoes</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6 class="mt-4">Purchase Recommendations</h6>
+                <div class="purchase-item">A warm-toned cardigan in a color like cream, camel, or rust</div>
+                <div class="purchase-item">Ankle boots in brown or black</div>
+                <div class="purchase-item">Statement scarf in a complementary color or pattern</div>
+            </div>
+        </div>
+        
+        <div class="history-card">
+            <div class="history-date">May 12, 2023</div>
+            <div class="history-content">
+                <h5>Job Interview Outfit</h5>
+                <p>You asked for advice on what to wear to a job interview.</p>
+                
+                <div class="outfit-container">
+                    <div class="outfit-title">Professional & Polished Look</div>
+                    <p>White Oxford Shirt (id=1525) + Black Slim Fit Jeans (id=5970) + White Sneakers (id=1341)</p>
+                    <div class="history-items">
+                        <div class="history-item">
+                            <img src="/static/wardrobe/white_shirts_formal.jpg" alt="White Oxford Shirt">
+                            <div class="item-label">White Shirt</div>
+                        </div>
+                        <div class="history-item">
+                            <img src="/static/wardrobe/black_jeans_casual.jpg" alt="Black Jeans">
+                            <div class="item-label">Black Jeans</div>
+                        </div>
+                        <div class="history-item">
+                            <img src="/static/wardrobe/white_casualshoes_casual.jpg" alt="White Sneakers">
+                            <div class="item-label">White Sneakers</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6 class="mt-4">Purchase Recommendations</h6>
+                <div class="purchase-item">A structured blazer in navy or charcoal</div>
+                <div class="purchase-item">Leather loafers or oxford shoes</div>
+            </div>
+        </div>
+        
+        <div class="text-center py-5 text-muted">
+            <p>Your style history is saved as you chat with Flair.</p>
+            <a href="/" class="btn btn-primary mt-3">Chat with Flair</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
