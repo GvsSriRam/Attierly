@@ -12,6 +12,9 @@ import bleach
 import re
 from werkzeug.utils import secure_filename
 
+# Import our enhanced weather utilities
+from utils.weather_utils import get_comprehensive_weather_context, WeatherService
+
 app = Flask(__name__, static_folder='static', template_folder='templates')
 load_dotenv()
 
@@ -20,21 +23,24 @@ UPLOAD_FOLDER = 'static/uploads'
 WARDROBE_FOLDER = 'static/wardrobe'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(WARDROBE_FOLDER, exist_ok=True)
 os.makedirs('static/css', exist_ok=True)
 
-# --- For chat history storage ---
+# --- Session Storage ---
 sessions = {}
 
 # --- Gemini API setup ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("WARNING: GEMINI_API_KEY not found in environment.")
-else:
+if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
     gemini_model = genai.GenerativeModel('gemini-1.5-flash-latest')
+else:
+    print("WARNING: GEMINI_API_KEY not found.")
+
+# --- Initialize Weather Service ---
+weather_service = WeatherService()
 
 # --- Global variables for models ---
 models = {}
@@ -243,91 +249,140 @@ def allowed_file(filename):
     """Check if file has allowed extension"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Process chat with Gemini AI ---
+def check_seasonal_appropriateness(item_classification, current_season, weather_context):
+    """Check if clothing item is appropriate for current season and weather"""
+    item_season = item_classification.get('season', 'Unknown')
+    item_usage = item_classification.get('usage', 'Unknown')
+    item_type = item_classification.get('articleType', 'Unknown')
+    
+    # Weather-based appropriateness
+    essential_items = weather_context['recommendations']['essential_items']
+    avoid_items = weather_context['recommendations']['avoid_items']
+    
+    appropriateness = {
+        'seasonal_match': item_season.lower() == current_season.lower(),
+        'weather_appropriate': True,
+        'recommendations': []
+    }
+    
+    # Check if item type should be avoided in current weather
+    item_type_lower = item_type.lower()
+    for avoid_item in avoid_items:
+        if avoid_item.lower() in item_type_lower:
+            appropriateness['weather_appropriate'] = False
+            appropriateness['recommendations'].append(f"Not recommended for current weather conditions")
+            break
+    
+    # Check if item is in essential items
+    for essential_item in essential_items:
+        if essential_item.lower() in item_type_lower:
+            appropriateness['recommendations'].append(f"Perfect for current weather!")
+            break
+    
+    return appropriateness
+
+def format_weather_context_for_prompt(weather_context):
+    """Format weather context for AI prompt"""
+    weather = weather_context['weather']
+    season = weather_context['season']
+    recommendations = weather_context['recommendations']
+    
+    context_parts = []
+    
+    # Current weather info
+    context_parts.append(f"Current Weather: {weather['temperature']}°C ({weather['condition']}) in {weather['location']}")
+    context_parts.append(f"Feels like: {weather['feels_like']}°C, Humidity: {weather['humidity']}%")
+    context_parts.append(f"Current Season: {season}")
+    
+    # Weather recommendations
+    if recommendations['essential_items']:
+        context_parts.append(f"Essential items for this weather: {', '.join(recommendations['essential_items'])}")
+    
+    if recommendations['avoid_items']:
+        context_parts.append(f"Items to avoid: {', '.join(recommendations['avoid_items'])}")
+    
+    if recommendations['color_recommendations']:
+        context_parts.append(f"Recommended colors: {', '.join(recommendations['color_recommendations'])}")
+    
+    if recommendations['fabric_recommendations']:
+        context_parts.append(f"Recommended fabrics: {', '.join(recommendations['fabric_recommendations'])}")
+    
+    if recommendations['layering_tips']:
+        context_parts.append(f"Layering tips: {'; '.join(recommendations['layering_tips'])}")
+    
+    return "\n".join(context_parts)
+
+# --- Process chat with Gemini AI and Weather Integration ---
 def process_chat(message, session_id, uploaded_images=None):
-    """Process chat message with Gemini AI"""
-    # Get chat history or initialize new chat
+    """Process chat message with snappy, fun Flair personality and limited suggestions"""
     chat_history = sessions.get(session_id, [])
-    
-    # Build prompt with context
-    prompt_parts = ["You are 'Flair', an AI fashion stylist chatbot for the Attierly app."]
-    
-    # Add wardrobe context
+    weather_context = get_comprehensive_weather_context(message)
+
+    # Personality & Response Rules
+    prompt_parts = [
+        "You're Flair — a snappy, stylish AI fashion buddy.",
+        "Speak casually, like texting a stylish friend 😎.",
+        "",  # spacer
+        "Response Rules:",
+        "1. Give JUST ONE outfit suggestion by default.",
+        "2. Only offer more if the user explicitly asks.",
+        "3. Use markdown + emojis; keep it short and sweet.",
+    ]
+
+    # Add user's wardrobe
     wardrobe_string = format_wardrobe_for_prompt()
-    prompt_parts.append(f"User's available wardrobe: {wardrobe_string}")
-    
-    # Add context about uploaded images if any
-    if uploaded_images and len(uploaded_images) > 0:
+    prompt_parts.append(f"User's wardrobe: {wardrobe_string}")
+
+    # Add weather context
+    weather_prompt = format_weather_context_for_prompt(weather_context)
+    prompt_parts.append(f"Weather Context:\n{weather_prompt}")
+
+    # Include any uploaded images context
+    if uploaded_images:
         if len(uploaded_images) == 1:
-            # Single image
             item = uploaded_images[0]
-            item_description = f"{item.get('classification', {}).get('baseColour', 'Unknown')} {item.get('classification', {}).get('articleType', 'Item')} (Usage: {item.get('classification', {}).get('usage', 'N/A')}, Season: {item.get('classification', {}).get('season', 'N/A')})"
-            prompt_parts.append(f"User uploaded an image of: {item_description}")
+            cls = item['classification']
+            desc = f"{cls.get('baseColour','Unknown')} {cls.get('articleType','Item')}"
+            prompt_parts.append(f"User showed an image of: {desc}")
         else:
-            # Multiple images
-            items_desc = []
-            for item in uploaded_images:
-                item_desc = f"{item.get('classification', {}).get('baseColour', 'Unknown')} {item.get('classification', {}).get('articleType', 'Item')}"
-                items_desc.append(item_desc)
-            
-            prompt_parts.append(f"User uploaded multiple images of: {', '.join(items_desc)}")
-    
-    # Add styling guidelines
-    prompt_parts.append("""
-Style Guidelines:
-1. When suggesting outfits from the user's wardrobe, clearly indicate the item IDs.
-2. When recommending purchases, clearly label them as "PURCHASE RECOMMENDATION".
-3. Format your responses using Markdown for better readability.
-4. If asked explicitly for purchase recommendations, focus only on new items to buy.
-5. If asked to pair with existing wardrobe items, prioritize what they already own.
-6. When referencing wardrobe items, use their item IDs, e.g., "Blue Graphic Tee (id=1163)".
-7. Format your responses with clear headings, bullet points, and emphasis where appropriate.
-8. Be concise but informative, focusing on practical advice.
-9. When suggesting multiple outfits, use numbered lists and clear section headings.
-10. For purchase recommendations, use bold text to highlight the key items.
-11. Use section headers and markdown formatting to make your response visually appealing.
-    """)
-    
-    # Add chat history context (limit to last 10 messages)
+            items_desc = [f"{img['classification'].get('baseColour','?')} {img['classification'].get('articleType','Item')}" for img in uploaded_images]
+            prompt_parts.append(f"User showed images of: {', '.join(items_desc)}")
+
+    # Add recent conversation
     if chat_history:
-        prompt_parts.append("Previous conversation:")
-        for i, msg in enumerate(chat_history[-10:]):
-            role = "User" if msg["role"] == "user" else "Flair"
+        prompt_parts.append("Previous convo:")
+        for msg in chat_history[-6:]:
+            role = "User" if msg['role']=='user' else "Flair"
             prompt_parts.append(f"{role}: {msg['content']}")
-    
+
     # Add current message
     prompt_parts.append(f"User: {message}")
     prompt_parts.append("Flair:")
-    
-    # Generate response with Gemini
+
+    # Generate with Gemini
+    full_prompt = "\n".join(prompt_parts)
     try:
-        response = gemini_model.generate_content("\n".join(prompt_parts))
-        ai_message = response.text.strip()
-        
-        # Add to chat history
-        if not chat_history:
-            chat_history = []
-        
-        # Add user message and AI response to history
-        chat_history.append({"role": "user", "content": message})
-        chat_history.append({"role": "assistant", "content": ai_message})
-        
-        # Update session
-        sessions[session_id] = chat_history
-        
-        # Process markdown to HTML
-        ai_message_html = markdown.markdown(ai_message)
-        # Sanitize HTML
-        allowed_tags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote']
-        ai_message_html = bleach.clean(ai_message_html, tags=allowed_tags, strip=True)
-        
-        # Process response to add image references
-        processed_response = add_image_references(ai_message, ai_message_html)
-        
-        return processed_response
+        resp = gemini_model.generate_content(full_prompt)
+        ai_text = resp.text.strip()
+
+        # Save to history
+        sessions.setdefault(session_id, []).extend([
+            {'role':'user','content':message},
+            {'role':'assistant','content':ai_text}
+        ])
+
+        # Convert markdown to HTML
+        html = bleach.clean(markdown.markdown(ai_text), tags=['p','em','strong','ul','ol','li','code'], strip=True)
+        result = {'text': ai_text, 'html': html}
+        # Attach images if any
+        images = add_image_references(ai_text, html)
+        result.update(images)
+        result['weather_context'] = weather_context
+        return result
     except Exception as e:
-        print(f"Error generating AI response: {e}")
-        return {"text": "Sorry, I encountered an error while processing your request.", "html": "<p>Sorry, I encountered an error while processing your request.</p>", "images": []}
+        print(f"AI error: {e}")
+        return {'text': "Oops! Something went wrong.", 'html': '<p>Oops! Something went wrong.</p>', 'images':[], 'weather_context':weather_context}
+
 
 def add_image_references(text, html):
     """Add image references to the response"""
@@ -368,7 +423,7 @@ def style_history():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Chat endpoint"""
+    """Chat endpoint with weather integration"""
     data = request.json
     session_id = data.get('session_id', 'default_session')
     message = data.get('message', '')
@@ -381,7 +436,7 @@ def chat():
 
 @app.route('/api/upload', methods=['POST'])
 def upload_image():
-    """Handle single image upload and classification"""
+    """Handle single image upload and classification with weather context"""
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
     
@@ -421,7 +476,7 @@ def upload_image():
 
 @app.route('/api/upload/multiple', methods=['POST'])
 def upload_multiple_images():
-    """Handle multiple image uploads and classification"""
+    """Handle multiple image uploads and classification with weather context"""
     if 'files' not in request.files:
         return jsonify({'error': 'No files part'}), 400
     
@@ -462,6 +517,25 @@ def upload_multiple_images():
     response['uploaded_images'] = uploaded_images
     
     return jsonify(response)
+
+@app.route('/api/weather', methods=['GET'])
+def get_weather():
+    """Get current weather for a location"""
+    location = request.args.get('location', 'New York, NY')
+    
+    try:
+        weather_data = weather_service.get_current_weather(location)
+        season = weather_service.get_current_season(location)
+        recommendations = weather_service.get_weather_based_recommendations(weather_data, season)
+        
+        return jsonify({
+            'weather': weather_data,
+            'season': season,
+            'recommendations': recommendations
+        })
+    except Exception as e:
+        print(f"Error getting weather data: {e}")
+        return jsonify({'error': 'Unable to fetch weather data'}), 500
 
 @app.route('/static/wardrobe/<path:filename>')
 def serve_wardrobe_image(filename):

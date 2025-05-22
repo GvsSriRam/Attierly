@@ -1,147 +1,133 @@
-#!/bin/bash
+# Attierly - Weather-Smart AI Fashion Assistant Setup
 
-# Attierly AI Fashion Chatbot - Enhanced Setup Script (Multiple Image Upload Version)
+## Quick Setup
 
-echo "====== Setting up Enhanced Attierly AI Fashion Chatbot ======"
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+```
 
-# Create project directory structure
-echo "Creating project directory structure..."
-mkdir -p attierly/static/uploads attierly/static/wardrobe attierly/static/css attierly/templates
-
-# Copy app.py with multiple image upload support
-echo "Creating app.py with multiple image upload support..."
-cat > attierly/app.py << 'EOL'
-# Content of the enhanced app.py file would be here
-# This is a large file, so it's not included in this script for brevity
-# Copy the content of the "app.py (with Multiple Image Upload Support)" artifact here
-EOL
-
-# Create theme.css file
-echo "Creating custom brown & white theme CSS..."
-cat > attierly/static/css/theme.css << 'EOL'
-/* Custom theme styles for Attierly - Brown & White */
-# The CSS content would be here
-# This is a large file, so it's not included in this script for brevity
-# Copy the content of the "attierly/static/css/theme.css" artifact here
-EOL
-
-# Create index.html template (chat UI with multiple image upload support)
-echo "Creating index.html template (chat UI with multiple image upload)..."
-cat > attierly/templates/index.html << 'EOL'
-<!DOCTYPE html>
-<!-- The HTML content would be here -->
-<!-- This is a large file, so it's not included in this script for brevity -->
-<!-- Copy the content of the "attierly/templates/index.html" artifact here -->
-EOL
-
-# Create style_history.html template
-echo "Creating style_history.html template..."
-cat > attierly/templates/style_history.html << 'EOL'
-<!DOCTYPE html>
-<!-- The HTML content would be here -->
-<!-- This is a large file, so it's not included in this script for brevity -->
-<!-- Copy the content of the "attierly/templates/style_history.html" artifact here -->
-EOL
-
-# Create wardrobe.html template (reusing the existing one)
-echo "Creating wardrobe.html template..."
-cat > attierly/templates/wardrobe.html << 'EOL'
-<!DOCTYPE html>
-<!-- The HTML content would be here -->
-<!-- This is a large file, so it's not included in this script for brevity -->
-<!-- Copy the content of the wardrobe.html template here -->
-EOL
-
-# Create sample wardrobe items using the naming convention: color_category_usage.jpg
-echo "Creating sample wardrobe items..."
-mkdir -p attierly/static/wardrobe
-
-# Function to create a colored rectangle as a placeholder image
-create_placeholder_image() {
-    local filename=$1
-    local color=$2
-    local text=$3
-    local width=400
-    local height=400
-    
-    # Create simple SVG as placeholder
-    cat > attierly/static/wardrobe/${filename} << IMGEOF
-<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="${color}"/>
-  <text x="50%" y="50%" font-family="Arial" font-size="40" fill="white" text-anchor="middle" dominant-baseline="middle">${text}</text>
-</svg>
-IMGEOF
-    echo "Created ${filename} as SVG"
-}
-
-# Create sample wardrobe items using the naming convention: color_category_usage.jpg
-create_placeholder_image "blue_tshirts_casual.jpg" "#3498db" "Blue T-shirt"
-create_placeholder_image "black_jeans_casual.jpg" "#2c3e50" "Black Jeans"
-create_placeholder_image "white_shirts_formal.jpg" "#ecf0f1" "White Shirt"
-create_placeholder_image "white_casualshoes_casual.jpg" "#f5f5f5" "White Sneakers"
-create_placeholder_image "white_skirts_casual.jpg" "#f8f9fa" "White Skirt"
-create_placeholder_image "red_heels_party.jpg" "#e74c3c" "Red Heels"
-create_placeholder_image "brown_jackets_casual.jpg" "#a0522d" "Brown Jacket"
-create_placeholder_image "black_dresses_party.jpg" "#34495e" "Black Dress"
-create_placeholder_image "green_skirts_casual.jpg" "#2ecc71" "Green Skirt"
-create_placeholder_image "green_shirts_casual.jpg" "#2ecc71" "Green Shirt"
-create_placeholder_image "green_jackets_casual.jpg" "#2ecc71" "Green Jacket"
-create_placeholder_image "brown_casualshoes_casual.jpg" "#a0522d" "Brown Shoes"
-create_placeholder_image "yellow_shirts_casual.jpg" "#f1c40f" "Yellow Shirt"
-
-# Create .env file
-echo "Creating .env file..."
-cat > attierly/.env << 'EOL'
-# Attierly Environment Configuration
+### 2. Configure Environment Variables
+Create a `.env` file with your API keys:
+```bash
+# Required for AI chat functionality
 GEMINI_API_KEY=your_gemini_api_key_here
-EOL
 
-# Create requirements.txt file
-echo "Creating requirements.txt file..."
-cat > attierly/requirements.txt << 'EOL'
-flask==2.3.3
-python-dotenv==1.0.0
-google-generativeai==0.3.1
-tensorflow==2.15.0
-pillow==10.1.0
-markdown==3.5.1
-bleach==6.1.0
-werkzeug==2.3.7
-EOL
+# Weather APIs (at least one recommended)
+OPENWEATHER_API_KEY=your_openweather_api_key_here
+WEATHERAPI_KEY=your_weatherapi_key_here
+```
 
-# Install required packages
-echo "Installing required Python packages..."
-pip install flask python-dotenv google-generativeai pillow tensorflow markdown bleach werkzeug
+### 3. Train Models (Optional)
+If you have the fashion dataset:
+```bash
+python train_model.py
+```
 
-# Instructions for the user
-echo "
-====== Attierly AI Fashion Chatbot Setup Complete ======
+### 4. Run the Application
+```bash
+python app.py
+```
 
-To run the application:
-1. Edit the attierly/.env file and add your Gemini API key:
-   GEMINI_API_KEY=your_actual_gemini_api_key_here
+Visit `http://localhost:5000` to access your weather-smart fashion assistant!
 
-2. Navigate to the attierly directory:
-   cd attierly
+## Key Features
 
-3. Start the Flask application:
-   python app.py
+### Weather Integration
+- **Real-time Weather Data**: Fetches current weather conditions for any location
+- **Smart Location Parsing**: Uses NER and LLM to extract locations from chat messages
+- **Weather-Appropriate Recommendations**: Suggests clothing based on temperature, conditions, and season
+- **Seasonal Awareness**: Adjusts recommendations based on current season and hemisphere
 
-4. Open your browser and go to:
-   http://localhost:5000
+### Advanced AI Features
+- **Multi-modal Analysis**: Upload multiple clothing images for complete outfit analysis
+- **Context-Aware Chat**: Remembers conversation history and weather context
+- **Location Intelligence**: Mentions like "What to wear in London?" automatically fetch London weather
+- **Condition-Specific Advice**: Handles explicit weather mentions like "cold weather" or "rainy day"
 
-Key Features:
-- Multiple image upload with custom messages
-- Rich brown & white color theme
-- Dynamic wardrobe detection from the 'static/wardrobe' folder
-- New wardrobe management page at /wardrobe
-- Style history tracking at /style-history
+### Fashion Classification
+- **Real-time Image Analysis**: Identifies clothing type, color, usage, and appropriate season
+- **Wardrobe Integration**: Dynamically loads and organizes your clothing items
+- **Outfit Coordination**: Suggests combinations from your existing wardrobe
 
-Notes:
-- The application is using simulated classification for images.
-- To integrate real classification, update the classify_image_bytes function
-  in app.py with your existing TensorFlow models.
-- For production use, replace the placeholder wardrobe images with real clothing items.
+## API Keys Setup
 
-Enjoy your Enhanced AI Fashion Chatbot!
-"
+### Gemini AI (Required)
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Create a new API key
+3. Add to `.env` as `GEMINI_API_KEY`
+
+### Weather APIs (Choose One or Both)
+
+#### OpenWeatherMap (Recommended)
+1. Sign up at [OpenWeatherMap](https://openweathermap.org/api)
+2. Get your free API key
+3. Add to `.env` as `OPENWEATHER_API_KEY`
+
+#### WeatherAPI (Alternative)
+1. Sign up at [WeatherAPI](https://www.weatherapi.com/)
+2. Get your free API key  
+3. Add to `.env` as `WEATHERAPI_KEY`
+
+## File Structure
+```
+attierly/
+├── app.py                    # Main Flask application with weather integration
+├── weather_utils.py          # Weather service and NER location parsing
+├── train_model.py           # Model training script
+├── requirements.txt         # Python dependencies
+├── .env                     # Environment variables (create this)
+├── static/
+│   ├── css/theme.css        # Custom styling
+│   ├── uploads/             # User uploaded images
+│   └── wardrobe/            # Wardrobe images
+├── templates/
+│   ├── index.html           # Main chat interface with weather
+│   ├── wardrobe.html        # Wardrobe management
+│   └── style_history.html   # Style history
+└── saved_models/            # Trained TensorFlow models (optional)
+```
+
+## Usage Examples
+
+### Weather-Smart Queries
+- **Location-based**: "What should I wear in Tokyo today?"
+- **Condition-based**: "Suggest outfit for rainy weather"
+- **Temperature-based**: "Cold weather layering tips"
+- **Seasonal**: "Spring outfit recommendations"
+
+### Image Analysis
+- Upload single item: "Is this jacket appropriate for current weather?"
+- Multiple items: "Create an outfit from these pieces"
+- Weather context: "Which of these is better for cold weather?"
+
+### Smart Features
+- **Auto-location detection**: Extracts locations from natural conversation
+- **Weather override**: Explicit weather mentions override current conditions
+- **Seasonal appropriateness**: Checks if clothing matches current season
+- **Layering suggestions**: Recommends layering for temperature changes
+
+## Troubleshooting
+
+### Weather Data Issues
+- If weather APIs fail, the app uses simulated data
+- Check API key validity and request limits
+- Ensure location names are clear and recognizable
+
+### NER Model Issues
+- Run `python -m spacy download en_core_web_sm` if location parsing fails
+- The app falls back to LLM parsing if NER is unavailable
+
+### Image Classification
+- Without trained models, the app uses random classification
+- Train models with your fashion dataset for better accuracy
+- Ensure `saved_models/` directory exists for model files
+
+## Development Notes
+
+- The weather service supports multiple API providers for redundancy
+- Location parsing uses NER first, then LLM fallback for accuracy
+- All weather recommendations are contextual to user's wardrobe
+- The system handles both northern and southern hemisphere seasons
+- Chat history includes weather context for better continuity

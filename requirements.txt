@@ -1,11 +1,25 @@
 tensorflow
 pandas
 numpy
-Pillow
-Flask
-google-generativeai
-python-dotenv
-scikit-learn # Needed for train_test_split
+Pillow==10.1.0
+Flask==2.3.3
+google-generativeai==0.3.1
+python-dotenv==1.0.0
+scikit-learn
 langchain
 langchain-google-genai
-langchain-core # Often a core dependency
+langchain-core
+markdown==3.5.1
+bleach==6.1.0
+werkzeug==2.3.7
+
+# Weather and Location Services
+requests==2.31.0
+geopy==2.4.0
+
+# NER Dependencies
+spacy>=3.7.0
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
+
+# Optional: For better NER performance
+spacy[transformers]
