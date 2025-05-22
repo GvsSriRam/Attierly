@@ -53,10 +53,10 @@ def load_classification_models():
     reverse_label_mappings = {}
     
     try:
-        # Load each model and its corresponding label mapping
+        # Load each model and its corresponding label mapping from saved_models directory
         for attribute in model_attributes:
-            model_path = f'model_{attribute}.keras'
-            mapping_path = f'map_{attribute}.npy'
+            model_path = os.path.join('saved_models', f'model_{attribute}.keras')
+            mapping_path = os.path.join('saved_models', f'map_{attribute}.npy')
             
             if os.path.exists(model_path) and os.path.exists(mapping_path):
                 # Load the model

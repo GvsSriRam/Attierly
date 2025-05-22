@@ -223,9 +223,12 @@ if __name__ == '__main__':
         )
 
         # --- Save Model and Label Mapping ---
-        # Save with names indicating the attribute
-        model_save_path = f'model_{current_label_col}.keras'
-        label_map_save_path = f'map_{current_label_col}.npy'
+        # Ensure saved_models directory exists
+        os.makedirs('saved_models', exist_ok=True)
+        
+        # Save with names indicating the attribute in saved_models directory
+        model_save_path = os.path.join('saved_models', f'model_{current_label_col}.keras')
+        label_map_save_path = os.path.join('saved_models', f'map_{current_label_col}.npy')
 
         print(f"\nSaving model for '{current_label_col}' to {model_save_path}...")
         model.save(model_save_path)
