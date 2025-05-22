@@ -7,145 +7,326 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/theme.css" rel="stylesheet">
     <style>
-        /* Additional inline styles to fix any immediate issues */
-        body {
-            background-color: var(--background-color);
+        /* Main layout styles */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 120px);
+            margin-top: 20px;
+            gap: 20px;
         }
         
+        .chat-section {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .outfit-visualization {
+            width: 350px;
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .outfit-header {
+            padding: 15px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .tryon-toggle {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.5);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .tryon-toggle:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .tryon-toggle.active {
+            background-color: white;
+            color: var(--primary-color);
+        }
+        
+        .outfit-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .user-photo-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .user-photo-upload {
+            display: none;
+        }
+        
+        .user-photo-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        
+        .user-photo-label:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .user-photo-preview {
+            margin-top: 15px;
+            max-width: 150px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tryon-result {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .tryon-result img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .tryon-loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .outfit-switcher {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .outfit-tab {
+            background-color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .outfit-tab.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .outfit-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .outfit-item {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .outfit-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .outfit-item.selected {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.2);
+        }
+        
+        .outfit-item.unselected {
+            opacity: 0.5;
+            filter: grayscale(50%);
+        }
+        
+        .outfit-item-checkbox {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        
+        .outfit-item-checkbox.checked {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .outfit-item img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .outfit-item-label {
+            padding: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background-color: white;
+        }
+        
+        .outfit-item-type {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        
+        .outfit-source-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        
+        .source-wardrobe {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .source-dataset {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .source-placeholder {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .tryon-controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .tryon-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        
+        .tryon-button:hover:not(:disabled) {
+            background-color: var(--primary-light);
+        }
+        
+        .tryon-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .no-outfits {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px 20px;
+        }
+        
+        .no-outfits-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        /* Chat container adjustments */
         .chat-container {
             background-color: #FFFFFF;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 120px);
+            height: 100%;
             overflow: hidden;
-            margin-top: 20px;
         }
         
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .outfit-visualization {
+                width: 100%;
+                max-height: 600px;
+                order: -1;
+            }
+            
+            .chat-section {
+                height: calc(100vh - 720px);
+                min-height: 400px;
+            }
         }
         
-        .chat-input {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border-top: 1px solid var(--border-color, #DEB887);
-            background-color: #FFFFFF;
-        }
-        
-        .custom-file-upload {
-            display: inline-block;
-            padding: 8px 12px;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            border-radius: 20px;
-            border: 1px solid #ced4da;
-            color: var(--primary-color, #8B4513);
-            margin-right: 10px;
-            transition: all 0.2s ease;
-        }
-        
-        .custom-file-upload:hover {
-            background-color: #e9ecef;
-        }
-        
-        #message-input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid #ced4da;
-            border-radius: 20px;
-            margin: 0 10px;
-            outline: none;
-        }
-        
-        #message-input:focus {
-            border-color: var(--primary-color, #8B4513);
-        }
-        
-        #send-button {
-            background-color: var(--primary-color, #8B4513);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        #send-button:hover {
-            background-color: var(--primary-light, #A0522D);
-        }
-        
-        #send-button svg {
-            width: 20px;
-            height: 20px;
-        }
-        
-        /* Fix message styling */
-        .message {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-            max-width: 85%;
-        }
-        
-        .message.user {
-            align-self: flex-end;
-            margin-left: auto;
-        }
-        
-        .message.assistant {
-            align-self: flex-start;
-            margin-right: auto;
-        }
-        
-        .message-content {
-            padding: 12px 15px;
-            border-radius: 18px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-        
-        .message.user .message-content {
-            background-color: var(--primary-color, #8B4513);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-        
-        .message.assistant .message-content {
-            background-color: var(--secondary-color, #F5F5DC);
-            color: var(--text-primary, #3E2723);
-            border-bottom-left-radius: 4px;
-        }
-        
-        .message-time {
-            font-size: 0.75rem;
-            color: var(--text-secondary, #795548);
-            margin-top: 5px;
-            align-self: flex-end;
-        }
-        
-        .message.user .message-time {
-            text-align: right;
-        }
-        
-        /* Image upload modal */
-        .image-preview-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            min-height: 150px;
-            border: 1px dashed var(--border-color, #DEB887);
-            border-radius: 8px;
-            padding: 10px;
-            position: relative;
+        @media (max-width: 768px) {
+            .main-container {
+                margin-top: 10px;
+                gap: 10px;
+            }
+            
+            .outfit-items {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            
+            .outfit-item img {
+                height: 100px;
+            }
+            
+            .outfit-content {
+                padding: 15px;
+            }
         }
     </style>
 </head>
@@ -172,9 +353,10 @@
         </div>
     </nav>
 
-    <div class="container py-4">
-        <div class="row">
-            <div class="col-lg-8 col-md-10 mx-auto">
+    <div class="container-fluid py-4">
+        <div class="main-container">
+            <!-- Chat Section -->
+            <div class="chat-section">
                 <div class="chat-container">
                     <div class="chat-messages" id="chat-messages">
                         <!-- Messages will be added here dynamically -->
@@ -199,6 +381,62 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
                                 <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
                             </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Outfit Visualization Section -->
+            <div class="outfit-visualization" id="outfit-visualization">
+                <div class="outfit-header">
+                    <span id="outfit-title">Outfit Visualization</span>
+                    <button class="tryon-toggle" id="tryon-toggle">Try On</button>
+                </div>
+                <div class="outfit-content">
+                    <!-- User Photo Upload Section (hidden by default) -->
+                    <div class="user-photo-section" id="user-photo-section" style="display: none;">
+                        <p style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-secondary);">Upload your photo for virtual try-on:</p>
+                        <label for="user-photo-upload" class="user-photo-label">
+                            📷 Upload Photo
+                        </label>
+                        <input type="file" id="user-photo-upload" class="user-photo-upload" accept="image/*">
+                        <div id="user-photo-preview"></div>
+                    </div>
+                    
+                    <!-- Try-on Result Section -->
+                    <div class="tryon-result" id="tryon-result" style="display: none;">
+                        <img id="tryon-result-img" src="" alt="Virtual Try-on Result">
+                    </div>
+                    
+                    <!-- Try-on Loading -->
+                    <div class="tryon-loading" id="tryon-loading" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p style="margin-top: 15px;">Creating your virtual try-on...</p>
+                    </div>
+                    
+                    <!-- No Outfits Message -->
+                    <div class="no-outfits" id="no-outfits">
+                        <div class="no-outfits-icon">👗</div>
+                        <h5>No Outfits Yet</h5>
+                        <p>Ask me for outfit suggestions to see them visualized here!</p>
+                    </div>
+                    
+                    <!-- Outfit Switcher -->
+                    <div class="outfit-switcher" id="outfit-switcher" style="display: none;">
+                        <!-- Outfit tabs will be added here -->
+                    </div>
+                    
+                    <!-- Outfit Items -->
+                    <div class="outfit-items" id="outfit-items">
+                        <!-- Outfit items will be displayed here -->
+                    </div>
+                    
+                    <!-- Try-on Controls -->
+                    <div class="tryon-controls" id="tryon-controls" style="display: none;">
+                        <button class="tryon-button" id="tryon-button">
+                            ✨ Try On Selected Items
                         </button>
                     </div>
                 </div>
@@ -249,6 +487,24 @@
             const customMessageInput = document.getElementById('custom-message-input');
             const sendImagesBtn = document.getElementById('send-images-btn');
             
+            // Outfit visualization elements
+            const outfitVisualization = document.getElementById('outfit-visualization');
+            const outfitTitle = document.getElementById('outfit-title');
+            const outfitSwitcher = document.getElementById('outfit-switcher');
+            const outfitItems = document.getElementById('outfit-items');
+            const noOutfitsDiv = document.getElementById('no-outfits');
+            
+            // Virtual try-on elements
+            const tryonToggle = document.getElementById('tryon-toggle');
+            const userPhotoSection = document.getElementById('user-photo-section');
+            const userPhotoUpload = document.getElementById('user-photo-upload');
+            const userPhotoPreview = document.getElementById('user-photo-preview');
+            const tryonResult = document.getElementById('tryon-result');
+            const tryonResultImg = document.getElementById('tryon-result-img');
+            const tryonLoading = document.getElementById('tryon-loading');
+            const tryonControls = document.getElementById('tryon-controls');
+            const tryonButton = document.getElementById('tryon-button');
+            
             // Bootstrap modal instance
             const imageUploadModal = new bootstrap.Modal(document.getElementById('imageUploadModal'));
             
@@ -256,7 +512,13 @@
             const sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
             let isProcessing = false;
             let selectedFiles = [];
+            let currentOutfits = [];
+            let activeOutfitIndex = 0;
+            let tryonMode = false;
+            let userPhotoUploaded = false;
+            let selectedOutfitItems = new Set();
             
+            // Utility functions
             function getCurrentTime() {
                 const now = new Date();
                 return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -264,6 +526,118 @@
             
             function scrollToBottom() {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // Try-on mode toggle
+            tryonToggle.addEventListener('click', function() {
+                tryonMode = !tryonMode;
+                this.classList.toggle('active', tryonMode);
+                
+                if (tryonMode) {
+                    userPhotoSection.style.display = 'block';
+                    if (currentOutfits.length > 0) {
+                        tryonControls.style.display = 'block';
+                        updateOutfitItemsForTryon();
+                    }
+                } else {
+                    userPhotoSection.style.display = 'none';
+                    tryonResult.style.display = 'none';
+                    tryonControls.style.display = 'none';
+                    updateOutfitItemsDisplay();
+                }
+            });
+            
+            // User photo upload
+            userPhotoUpload.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('session_id', sessionId);
+                    
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        userPhotoPreview.innerHTML = `<img src="${e.target.result}" class="user-photo-preview" alt="User Photo">`;
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Upload to server
+                    fetch('/api/upload/user-photo', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            userPhotoUploaded = true;
+                            console.log('User photo uploaded successfully');
+                        } else {
+                            alert('Error uploading photo: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error uploading photo:', error);
+                        alert('Error uploading photo. Please try again.');
+                    });
+                }
+            });
+            
+            // Try-on button
+            tryonButton.addEventListener('click', function() {
+                if (!userPhotoUploaded) {
+                    alert('Please upload your photo first!');
+                    return;
+                }
+                
+                if (selectedOutfitItems.size === 0) {
+                    alert('Please select at least one outfit item!');
+                    return;
+                }
+                
+                performVirtualTryOn();
+            });
+            
+            function performVirtualTryOn() {
+                const currentOutfit = currentOutfits[activeOutfitIndex];
+                if (!currentOutfit) return;
+                
+                // Show loading
+                tryonLoading.style.display = 'block';
+                tryonResult.style.display = 'none';
+                tryonButton.disabled = true;
+                
+                const requestData = {
+                    session_id: sessionId,
+                    outfit_items: currentOutfit.items_with_images,
+                    selected_items: Array.from(selectedOutfitItems)
+                };
+                
+                fetch('/api/virtual-tryon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    tryonLoading.style.display = 'none';
+                    tryonButton.disabled = false;
+                    
+                    if (data.success) {
+                        tryonResultImg.src = data.result_image;
+                        tryonResult.style.display = 'block';
+                    } else {
+                        alert('Virtual try-on failed: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Try-on error:', error);
+                    tryonLoading.style.display = 'none';
+                    tryonButton.disabled = false;
+                    alert('Virtual try-on failed. Please try again.');
+                });
             }
             
             function addMessage(type, content, time = getCurrentTime()) {
@@ -311,6 +685,200 @@
                 return indicator;
             }
             
+            // Outfit visualization functions
+            function updateOutfitVisualization(outfitData) {
+                if (!outfitData || !outfitData.has_outfits) {
+                    showNoOutfits();
+                    return;
+                }
+                
+                currentOutfits = outfitData.outfits;
+                activeOutfitIndex = 0;
+                selectedOutfitItems.clear();
+                
+                // Hide no-outfits message
+                noOutfitsDiv.style.display = 'none';
+                
+                // Create outfit tabs if multiple outfits
+                if (currentOutfits.length > 1) {
+                    createOutfitTabs();
+                    outfitSwitcher.style.display = 'flex';
+                } else {
+                    outfitSwitcher.style.display = 'none';
+                }
+                
+                // Display the first outfit
+                displayOutfit(0);
+                
+                // Show try-on controls if in try-on mode
+                if (tryonMode) {
+                    tryonControls.style.display = 'block';
+                    updateOutfitItemsForTryon();
+                }
+            }
+            
+            function showNoOutfits() {
+                noOutfitsDiv.style.display = 'block';
+                outfitSwitcher.style.display = 'none';
+                outfitItems.innerHTML = '';
+                tryonControls.style.display = 'none';
+                outfitTitle.textContent = 'Outfit Visualization';
+            }
+            
+            function createOutfitTabs() {
+                outfitSwitcher.innerHTML = '';
+                
+                currentOutfits.forEach((outfit, index) => {
+                    const tab = document.createElement('div');
+                    tab.classList.add('outfit-tab');
+                    if (index === activeOutfitIndex) {
+                        tab.classList.add('active');
+                    }
+                    tab.textContent = outfit.title || `Outfit ${index + 1}`;
+                    tab.addEventListener('click', () => switchOutfit(index));
+                    outfitSwitcher.appendChild(tab);
+                });
+            }
+            
+            function switchOutfit(index) {
+                if (index >= 0 && index < currentOutfits.length) {
+                    activeOutfitIndex = index;
+                    selectedOutfitItems.clear();
+                    
+                    // Update tab states
+                    document.querySelectorAll('.outfit-tab').forEach((tab, i) => {
+                        tab.classList.toggle('active', i === index);
+                    });
+                    
+                    // Display selected outfit
+                    displayOutfit(index);
+                    
+                    if (tryonMode) {
+                        updateOutfitItemsForTryon();
+                    }
+                }
+            }
+            
+            function displayOutfit(index) {
+                const outfit = currentOutfits[index];
+                if (!outfit) return;
+                
+                // Update title
+                outfitTitle.textContent = outfit.title || 'Outfit Visualization';
+                
+                if (tryonMode) {
+                    updateOutfitItemsForTryon();
+                } else {
+                    updateOutfitItemsDisplay();
+                }
+            }
+            
+            function updateOutfitItemsDisplay() {
+                const outfit = currentOutfits[activeOutfitIndex];
+                if (!outfit) return;
+                
+                // Clear previous items
+                outfitItems.innerHTML = '';
+                
+                // Add outfit items
+                outfit.items_with_images.forEach((itemData, index) => {
+                    const itemElement = createOutfitItemElement(itemData, index, false);
+                    outfitItems.appendChild(itemElement);
+                });
+            }
+            
+            function updateOutfitItemsForTryon() {
+                const outfit = currentOutfits[activeOutfitIndex];
+                if (!outfit) return;
+                
+                // Clear previous items
+                outfitItems.innerHTML = '';
+                
+                // Add outfit items with selection capability
+                outfit.items_with_images.forEach((itemData, index) => {
+                    const itemElement = createOutfitItemElement(itemData, index, true);
+                    outfitItems.appendChild(itemElement);
+                });
+            }
+            
+            function createOutfitItemElement(itemData, index, selectable) {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('outfit-item');
+                
+                if (selectable) {
+                    itemDiv.style.cursor = 'pointer';
+                    
+                    // Add selection state
+                    const isSelected = selectedOutfitItems.has(index);
+                    if (isSelected) {
+                        itemDiv.classList.add('selected');
+                    }
+                    
+                    // Add checkbox
+                    const checkbox = document.createElement('div');
+                    checkbox.classList.add('outfit-item-checkbox');
+                    if (isSelected) {
+                        checkbox.classList.add('checked');
+                        checkbox.innerHTML = '✓';
+                    }
+                    itemDiv.appendChild(checkbox);
+                    
+                    // Add click handler
+                    itemDiv.addEventListener('click', () => toggleItemSelection(index, itemDiv, checkbox));
+                }
+                
+                const img = document.createElement('img');
+                img.src = itemData.image_path;
+                img.alt = itemData.details.description || `${itemData.item.color} ${itemData.item.type}`;
+                img.onerror = function() {
+                    this.src = '/static/placeholder/150/200';
+                };
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.classList.add('outfit-item-label');
+                
+                const typeDiv = document.createElement('div');
+                typeDiv.classList.add('outfit-item-type');
+                typeDiv.textContent = itemData.item.type;
+                
+                const colorDiv = document.createElement('div');
+                colorDiv.textContent = itemData.item.color !== 'Any' ? itemData.item.color : '';
+                
+                const sourceBadge = document.createElement('div');
+                sourceBadge.classList.add('outfit-source-badge');
+                sourceBadge.classList.add(`source-${itemData.source}`);
+                sourceBadge.textContent = itemData.source === 'wardrobe' ? 'Your Wardrobe' : 
+                                         itemData.source === 'dataset' ? 'Suggested' : 'Not Found';
+                
+                labelDiv.appendChild(typeDiv);
+                if (colorDiv.textContent) {
+                    labelDiv.appendChild(colorDiv);
+                }
+                labelDiv.appendChild(sourceBadge);
+                
+                itemDiv.appendChild(img);
+                itemDiv.appendChild(labelDiv);
+                
+                return itemDiv;
+            }
+            
+            function toggleItemSelection(index, itemDiv, checkbox) {
+                if (selectedOutfitItems.has(index)) {
+                    selectedOutfitItems.delete(index);
+                    itemDiv.classList.remove('selected');
+                    checkbox.classList.remove('checked');
+                    checkbox.innerHTML = '';
+                } else {
+                    selectedOutfitItems.add(index);
+                    itemDiv.classList.add('selected');
+                    checkbox.classList.add('checked');
+                    checkbox.innerHTML = '✓';
+                }
+                
+                // Update try-on button state
+                tryonButton.disabled = selectedOutfitItems.size === 0 || !userPhotoUploaded;
+            }
+            
             function addImageGallery(messageDiv, images) {
                 if (!images || images.length === 0) return;
                 
@@ -334,7 +902,6 @@
                     gallery.appendChild(item);
                 });
                 
-                // Find the message-content div and append the gallery to it
                 const messageContent = messageDiv.querySelector('.message-content');
                 if (messageContent) {
                     messageContent.appendChild(gallery);
@@ -371,7 +938,6 @@
                     container.appendChild(imgContainer);
                 });
                 
-                // Find the message-content div and append the container to it
                 const messageContent = messageDiv.querySelector('.message-content');
                 if (messageContent) {
                     messageContent.appendChild(container);
@@ -386,16 +952,10 @@
                 if (isProcessing || !message.trim()) return;
                 isProcessing = true;
                 
-                // Reset input field
                 messageInput.value = '';
-                
-                // Create user message element
                 const userMessageDiv = addMessage('user', message);
-                
-                // Show typing indicator
                 const typingIndicator = addTypingIndicator();
                 
-                // Handle text-only message
                 fetch('/api/chat', {
                     method: 'POST',
                     headers: {
@@ -408,15 +968,17 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Remove typing indicator
                     typingIndicator.remove();
                     
-                    // Add assistant response
                     const assistantMessageDiv = addMessage('assistant', data);
                     
-                    // Add image gallery if there are images
                     if (data.images && data.images.length > 0) {
                         addImageGallery(assistantMessageDiv, data.images);
+                    }
+                    
+                    // Update outfit visualization
+                    if (data.outfit_visualization) {
+                        updateOutfitVisualization(data.outfit_visualization);
                     }
                     
                     isProcessing = false;
@@ -433,13 +995,9 @@
                 if (isProcessing || !files || files.length === 0) return;
                 isProcessing = true;
                 
-                // Create user message element with custom message
                 const userMessageDiv = addMessage('user', customMessage || "What do you think of these items?");
-                
-                // Show typing indicator
                 const typingIndicator = addTypingIndicator();
                 
-                // Create FormData for multiple file upload
                 const formData = new FormData();
                 for (let i = 0; i < files.length; i++) {
                     formData.append('files', files[i]);
@@ -448,32 +1006,30 @@
                 formData.append('session_id', sessionId);
                 formData.append('message', customMessage || "What do you think of these items?");
                 
-                // Send request to the backend
                 fetch('/api/upload/multiple', {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Remove typing indicator
                     typingIndicator.remove();
                     
-                    // Add uploaded images to user message
                     if (data.uploaded_images && data.uploaded_images.length > 0) {
                         addUploadedImages(userMessageDiv, data.uploaded_images);
                     }
                     
-                    // Add assistant response
                     const assistantMessageDiv = addMessage('assistant', data);
                     
-                    // Add image gallery if there are images
                     if (data.images && data.images.length > 0) {
                         addImageGallery(assistantMessageDiv, data.images);
                     }
                     
-                    isProcessing = false;
+                    // Update outfit visualization
+                    if (data.outfit_visualization) {
+                        updateOutfitVisualization(data.outfit_visualization);
+                    }
                     
-                    // Clear selectedFiles after processing
+                    isProcessing = false;
                     selectedFiles = [];
                 })
                 .catch(error => {
@@ -481,27 +1037,20 @@
                     typingIndicator.remove();
                     addMessage('assistant', 'Sorry, I encountered an error processing your images.');
                     isProcessing = false;
-                    
-                    // Clear selectedFiles after error
                     selectedFiles = [];
                 });
             }
             
-            // Function to update image preview
             function updateImagePreview() {
-                // Clear previous previews
                 imagePreviewContainer.innerHTML = '';
                 
                 if (selectedFiles.length === 0) {
-                    // Show "no images" message
                     imagePreviewContainer.appendChild(noImagesMessage);
                     return;
                 }
                 
-                // Hide "no images" message
                 noImagesMessage.style.display = 'none';
                 
-                // Add preview for each selected file
                 selectedFiles.forEach((file, index) => {
                     const previewItem = document.createElement('div');
                     previewItem.classList.add('image-preview-item');
@@ -526,7 +1075,7 @@
                 });
             }
             
-            // Send message on button click
+            // Event listeners
             sendButton.addEventListener('click', function() {
                 const message = messageInput.value.trim();
                 if (message !== '') {
@@ -534,7 +1083,6 @@
                 }
             });
             
-            // Send message on Enter key
             messageInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -545,23 +1093,16 @@
                 }
             });
             
-            // Open modal when image upload is clicked
             imageUpload.addEventListener('change', function(e) {
                 if (this.files && this.files.length > 0) {
-                    // Convert FileList to array and store
                     selectedFiles = Array.from(this.files);
-                    
-                    // Prepare and show modal
                     customMessageInput.value = '';
                     updateImagePreview();
                     imageUploadModal.show();
-                    
-                    // Reset file input
                     this.value = '';
                 }
             });
             
-            // Send images button handler
             sendImagesBtn.addEventListener('click', function() {
                 if (selectedFiles.length > 0) {
                     const message = customMessageInput.value.trim();
