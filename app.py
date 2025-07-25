@@ -20,6 +20,7 @@ from utils.outfit_visualizer import OutfitVisualizer
 
 # Import virtual try-on
 from utils.virtual_tryon import virtual_tryon
+from ai.agent import AttierlyAIAgent
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 load_dotenv()
@@ -432,16 +433,35 @@ def wardrobe_page():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Chat endpoint with weather integration and outfit visualization"""
     data = request.json
-    session_id = data.get('session_id', 'default_session')
     message = data.get('message', '')
+    session_id = data.get('session_id', 'default')
     
-    if not message:
-        return jsonify({'error': 'Message is required'}), 400
-    
-    response = process_chat(message, session_id)
-    return jsonify(response)
+    # Use the new AI agent for enhanced reasoning
+    try:
+        agent = AttierlyAIAgent()
+        result = agent.chat(message, [])  # Start fresh for now, can add chat history later
+        
+        # Extract the final answer for compatibility with existing UI
+        final_answer = result.get('final_answer', result.get('answer', ''))
+        
+        # Return in the format expected by the existing UI with ALL necessary data for detailed reasoning
+        response_data = {
+            'answer': final_answer,
+            'full_response': result.get('answer', ''),  # Include full reasoning for debugging
+            'reasoning': result.get('reasoning', ''),
+            'context_analysis': result.get('context_analysis', ''),
+            'tool_results': result.get('tool_results', {}),
+            'tools_used': result.get('tools_used', {}),
+            'context_used': result.get('context_used', '')
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"Error in AI agent: {str(e)}")
+        # Fallback to original logic if AI agent fails
+        return jsonify({'answer': 'I apologize, but I encountered an error. Please try again.'})
 
 @app.route('/api/upload', methods=['POST'])
 def upload_image():
@@ -643,6 +663,20 @@ def add_to_wardrobe():
         })
     
     return jsonify({'error': 'Invalid file format'}), 400
+
+# --- New AI Agent Endpoint ---
+@app.route('/api/agent_chat', methods=['POST'])
+def agent_chat():
+    data = request.json
+    message = data.get('message', '')
+    chat_history = data.get('chat_history', [])
+    agent = AttierlyAIAgent()
+    result = agent.chat(message, chat_history)
+    return jsonify({'answer': result['answer']})
+
+@app.route('/agent-test')
+def agent_test():
+    return render_template('agent_test.html')
 
 # --- Static File Serving ---
 @app.route('/static/wardrobe/<path:filename>')

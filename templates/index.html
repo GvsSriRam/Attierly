@@ -279,6 +279,80 @@
             opacity: 0.5;
         }
         
+        /* Enhanced AI Agent Message Styles */
+        .final-answer {
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+            font-weight: 500;
+        }
+        
+        .reasoning-toggle {
+            margin: 10px 0;
+        }
+        
+        .reasoning-toggle button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .reasoning-toggle button:hover {
+            background-color: #5a6268;
+        }
+        
+        .toggle-icon {
+            font-size: 0.7rem;
+            transition: transform 0.2s ease;
+        }
+        
+        .reasoning-details {
+            margin-top: 15px;
+            border-top: 1px solid #e9ecef;
+            padding-top: 15px;
+        }
+        
+        .reasoning-section {
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .reasoning-section h6 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .reasoning-content {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #6c757d;
+        }
+        
+        .reasoning-content pre {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
         /* Chat container adjustments */
         .chat-container {
             background-color: #FFFFFF;
@@ -346,6 +420,9 @@
                         <a class="nav-link" href="/style-history">Style History</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/agent-test">🤖 AI Agent Test</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link active" href="/">Chat with Flair</a>
                     </li>
                 </ul>
@@ -362,7 +439,7 @@
                         <!-- Messages will be added here dynamically -->
                         <div class="message assistant">
                             <div class="message-content">
-                                <p>Hi! I'm Flair, your AI fashion stylist. How can I help with your outfit today?</p>
+                                <p>Hi! I'm Flair, your AI fashion stylist with advanced reasoning capabilities. I can help you with outfit recommendations, style advice, and fashion questions. Try asking me about weather-appropriate outfits, your wardrobe, or current fashion trends!</p>
                             </div>
                             <div class="message-time">Just now</div>
                         </div>
@@ -970,7 +1047,14 @@
                 .then(data => {
                     typingIndicator.remove();
                     
-                    const assistantMessageDiv = addMessage('assistant', data);
+                    // Check if this is an enhanced AI agent response
+                    if (data.full_response && data.reasoning) {
+                        // Display enhanced response with reasoning
+                        const assistantMessageDiv = addEnhancedMessage('assistant', data);
+                    } else {
+                        // Display regular response
+                        const assistantMessageDiv = addMessage('assistant', data);
+                    }
                     
                     if (data.images && data.images.length > 0) {
                         addImageGallery(assistantMessageDiv, data.images);
@@ -989,6 +1073,87 @@
                     addMessage('assistant', 'Sorry, I encountered an error processing your request.');
                     isProcessing = false;
                 });
+            }
+            
+            function addEnhancedMessage(role, data) {
+                const chatMessages = document.getElementById('chat-messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${role}`;
+                
+                const roleLabel = role === 'user' ? 'You' : 'AI Assistant';
+                
+                // Create the main message content
+                let content = `<div class="message-content">`;
+                content += `<p><strong>${roleLabel}:</strong></p>`;
+                
+                // Show the final answer prominently
+                const finalAnswer = data.final_answer || data.answer || '';
+                content += `<div class="final-answer">${finalAnswer}</div>`;
+                
+                // Add toggle for detailed reasoning (only if we have detailed data)
+                const hasDetailedData = data.context_analysis && data.context_analysis !== "Fallback response" && 
+                                       data.reasoning && data.reasoning !== "Fallback response due to API limitations";
+                
+                if (hasDetailedData) {
+                    content += `<div class="reasoning-toggle">`;
+                    content += `<button class="btn btn-sm btn-outline-secondary" onclick="toggleReasoning(this)">`;
+                    content += `<span class="toggle-text">Show Detailed Reasoning</span>`;
+                    content += `<span class="toggle-icon">▼</span>`;
+                    content += `</button>`;
+                    content += `</div>`;
+                    
+                    // Add collapsible reasoning sections
+                    content += `<div class="reasoning-details" style="display: none;">`;
+                    
+                    if (data.context_analysis && data.context_analysis !== "Fallback response") {
+                        content += `<div class="reasoning-section">`;
+                        content += `<h6>🔍 Context Analysis</h6>`;
+                        content += `<div class="reasoning-content">${data.context_analysis}</div>`;
+                        content += `</div>`;
+                    }
+                    
+                    if (data.tool_results && Object.keys(data.tool_results).length > 0) {
+                        content += `<div class="reasoning-section">`;
+                        content += `<h6>🛠️ Tool Results</h6>`;
+                        content += `<div class="reasoning-content"><pre>${JSON.stringify(data.tool_results, null, 2)}</pre></div>`;
+                        content += `</div>`;
+                    }
+                    
+                    if (data.reasoning && data.reasoning !== "Fallback response due to API limitations") {
+                        content += `<div class="reasoning-section">`;
+                        content += `<h6>🧠 Reasoning Process</h6>`;
+                        content += `<div class="reasoning-content">${data.reasoning}</div>`;
+                        content += `</div>`;
+                    }
+                    
+                    content += `</div>`; // Close reasoning-details
+                }
+                content += `</div>`; // Close message-content
+                
+                // Add timestamp
+                content += `<div class="message-time">${new Date().toLocaleTimeString()}</div>`;
+                
+                messageDiv.innerHTML = content;
+                chatMessages.appendChild(messageDiv);
+                scrollToBottom();
+                
+                return messageDiv;
+            }
+            
+            function toggleReasoning(button) {
+                const reasoningDetails = button.parentElement.nextElementSibling;
+                const toggleText = button.querySelector('.toggle-text');
+                const toggleIcon = button.querySelector('.toggle-icon');
+                
+                if (reasoningDetails.style.display === 'none') {
+                    reasoningDetails.style.display = 'block';
+                    toggleText.textContent = 'Hide Detailed Reasoning';
+                    toggleIcon.textContent = '▲';
+                } else {
+                    reasoningDetails.style.display = 'none';
+                    toggleText.textContent = 'Show Detailed Reasoning';
+                    toggleIcon.textContent = '▼';
+                }
             }
             
             function handleImageUpload(files, customMessage) {

@@ -498,3 +498,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 *Note: This is a demonstration project showcasing advanced AI and computer vision techniques in fashion technology. The fashion classification models were trained on publicly available datasets for educational and demonstration purposes.*
+
+## AI Agent Backend (2024 Upgrade)
+
+- Uses Gemini LLM (Google Generative AI) for chat and reasoning.
+- Retrieval-Augmented Generation (RAG) with Chroma vector store (runs locally, no cloud needed).
+- Wardrobe and fashion dataset are indexed for context-aware suggestions.
+- New endpoint: `POST /api/agent_chat` with `{ "message": "...", "chat_history": [...] }` for advanced chat.
+- All AI logic is modularized in `ai/` (see `ai/agent.py`, `ai/rag_utils.py`, `ai/tools.py`).
+- Easy to extend with more tools (weather, wardrobe, try-on, shopping, etc).
+
+### Requirements
+- See `requirements.txt` for all dependencies (LangChain, Chroma, Gemini, etc).
+- All vector store and LLM calls are supported on MacBook Pro (Apple Silicon/Intel).
+
+### How to Ingest Data
+- Use `ai/rag_utils.py` to ingest wardrobe and dataset into the vector store for best results.
+
+### How to Use
+- Call `/api/agent_chat` for the new AI-powered chat experience.

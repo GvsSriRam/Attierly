@@ -329,21 +329,28 @@ class WeatherService:
             'units': 'metric'
         }
         
-        response = requests.get(url, params=params, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            return {
-                'location': f"{data['name']}, {data['sys']['country']}",
-                'temperature': round(data['main']['temp']),
-                'feels_like': round(data['main']['feels_like']),
-                'humidity': data['main']['humidity'],
-                'condition': data['weather'][0]['main'],
-                'description': data['weather'][0]['description'],
-                'wind_speed': data.get('wind', {}).get('speed', 0),
-                'source': 'OpenWeatherMap'
-            }
-        
-        return None
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    'location': f"{data['name']}, {data['sys']['country']}",
+                    'temperature': round(data['main']['temp']),
+                    'feels_like': round(data['main']['feels_like']),
+                    'humidity': data['main']['humidity'],
+                    'condition': data['weather'][0]['main'],
+                    'description': data['weather'][0]['description'],
+                    'wind_speed': data.get('wind', {}).get('speed', 0),
+                    'source': 'OpenWeatherMap'
+                }
+            else:
+                print(f"OpenWeatherMap API error: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            print(f"OpenWeatherMap request failed: {e}")
+            return None
     
     def _get_weatherapi_data(self, location: str) -> Optional[Dict]:
         """Get weather data from WeatherAPI"""
@@ -376,18 +383,36 @@ class WeatherService:
     def _get_simulated_weather(self, location: str) -> Dict:
         """Generate simulated weather data when APIs are unavailable"""
         import random
+        from datetime import datetime
         
-        conditions = ['Clear', 'Partly Cloudy', 'Cloudy', 'Rain', 'Snow']
-        temperatures = list(range(-5, 35))  # Celsius range
+        # Get current month for more realistic seasonal temperatures
+        current_month = datetime.now().month
+        
+        # Seasonal temperature ranges (Celsius)
+        if current_month in [12, 1, 2]:  # Winter
+            temp_range = list(range(-5, 15))
+            conditions = ['Clear', 'Partly Cloudy', 'Cloudy', 'Snow', 'Rain']
+        elif current_month in [3, 4, 5]:  # Spring
+            temp_range = list(range(5, 25))
+            conditions = ['Clear', 'Partly Cloudy', 'Cloudy', 'Rain']
+        elif current_month in [6, 7, 8]:  # Summer
+            temp_range = list(range(15, 35))
+            conditions = ['Clear', 'Partly Cloudy', 'Cloudy', 'Rain']
+        else:  # Fall
+            temp_range = list(range(5, 25))
+            conditions = ['Clear', 'Partly Cloudy', 'Cloudy', 'Rain']
+        
+        temperature = random.choice(temp_range)
+        condition = random.choice(conditions)
         
         return {
             'location': location,
-            'temperature': random.choice(temperatures),
-            'feels_like': random.choice(temperatures),
-            'humidity': random.randint(30, 90),
-            'condition': random.choice(conditions),
-            'description': random.choice(conditions).lower(),
-            'wind_speed': random.randint(0, 20),
+            'temperature': temperature,
+            'feels_like': temperature + random.randint(-3, 3),  # Slight variation
+            'humidity': random.randint(40, 80),
+            'condition': condition,
+            'description': condition.lower(),
+            'wind_speed': random.randint(0, 15),
             'source': 'Simulated (API unavailable)'
         }
     

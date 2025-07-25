@@ -7,6 +7,9 @@ google-generativeai==0.3.1
 python-dotenv==1.0.0
 scikit-learn
 langchain
+chromadb
+google-generativeai
+sentence-transformers
 langchain-google-genai
 langchain-core
 markdown==3.5.1
@@ -23,3 +26,7 @@ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1
 
 # Optional: For better NER performance
 spacy[transformers]
+langchain-community
+# Required for Gemini LLM and Chroma vector store integration
+langchain-google-genai
+langchain-community
