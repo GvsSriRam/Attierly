@@ -31,7 +31,7 @@ python3 start_frontend.py
 Attierly/
 ├── backend/                 # Backend microservices
 │   ├── services/
-│   │   ├── ai_orchestrator/ # Main AI service with React agent
+│   │   ├── ai_orchestrator/ # Main AI service with Simple Multi-Agent Architecture
 │   │   ├── user_service/    # User profile management
 │   │   └── ecommerce_service/ # Product search and recommendations
 │   ├── start_local.py       # Backend startup script
@@ -52,7 +52,7 @@ Attierly/
 
 ### AI-Powered Fashion Assistant
 - **Intelligent Recommendations**: Get personalized fashion advice based on occasion, weather, and style preferences
-- **React Agent**: Advanced reasoning with observe-think-act pattern
+- **Simple Multi-Agent System**: Three specialized agents (Intent, Context, Task) working sequentially
 - **Multi-modal Analysis**: Location, weather, occasion, and style inference
 - **Real-time Processing**: Fast response times with intelligent caching
 
@@ -64,7 +64,7 @@ Attierly/
 - **Quick Actions**: Pre-defined buttons for common fashion queries
 
 ### Microservices Architecture
-- **AI Orchestrator**: Main AI service with React reasoning
+- **AI Orchestrator**: Main AI service with Simple Multi-Agent Architecture
 - **User Service**: User profile and preference management
 - **E-commerce Service**: Product search and recommendations
 - **Health Monitoring**: Real-time service health checks
@@ -75,7 +75,7 @@ Attierly/
 - **Python 3.8+**: Core programming language
 - **FastAPI**: Modern web framework for APIs
 - **Uvicorn**: ASGI server for high performance
-- **React Agent**: Advanced AI reasoning architecture
+- **Simple Multi-Agent Architecture**: Three specialized agents for intelligent reasoning
 - **Multiple LLM Providers**: OpenAI, Anthropic, Google Gemini support
 
 ### Frontend

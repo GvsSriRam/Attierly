@@ -18,12 +18,14 @@ class LocationInferenceTool(BaseTool):
         super().__init__(ToolType.LOCATION, "location_inference")
         self.geocoding_service = GeocodingService()
         
-        # Location extraction patterns
+        # Enhanced location extraction patterns
         self.location_patterns = [
             r"in\s+([A-Za-z\s]+(?:,\s*[A-Z]{2})?)",  # "in NYC" or "in New York, NY"
             r"at\s+([A-Za-z\s]+(?:,\s*[A-Z]{2})?)",  # "at San Francisco"
+            r"for\s+([A-Za-z\s]+(?:,\s*[A-Z]{2})?)",  # "for San Jose" or "for NYC"
             r"([A-Za-z\s]+),\s*([A-Z]{2})",  # "New York, NY"
             r"coordinates?\s*[:\-]?\s*(\d+\.\d+),\s*(\d+\.\d+)",  # "coordinates: 40.7128, -74.0060"
+            r"([A-Za-z\s]+)\s*\?",  # "San Jose?" or "NYC?"
         ]
     
     async def execute(self, user_message: str, conversation_history: List[Dict] = None, 
@@ -103,11 +105,14 @@ class LocationInferenceTool(BaseTool):
                 if isinstance(matches[0], tuple):
                     return f"{matches[0][0]}, {matches[0][1]}"
                 else:
-                    return matches[0].strip()
+                    location = matches[0].strip()
+                    # Clean up the location (remove question marks, extra spaces)
+                    location = re.sub(r'\?+$', '', location).strip()
+                    return location
         
         # Check for common location keywords
         location_keywords = [
-            "in", "at", "near", "around", "visiting", "going to", "headed to"
+            "in", "at", "near", "around", "visiting", "going to", "headed to", "for"
         ]
         
         for keyword in location_keywords:
@@ -119,7 +124,21 @@ class LocationInferenceTool(BaseTool):
                     # Extract first few words as potential location
                     words = location_part.split()[:3]
                     if words:
-                        return " ".join(words)
+                        location = " ".join(words)
+                        # Clean up the location
+                        location = re.sub(r'\?+$', '', location).strip()
+                        return location
+        
+        # Check for standalone location mentions (like "San Jose?")
+        # This handles cases where location is mentioned without prepositions
+        words = text_lower.split()
+        for word in words:
+            # Clean the word
+            clean_word = re.sub(r'[^\w\s]', '', word).strip()
+            if clean_word and len(clean_word) > 2:  # Avoid very short words
+                # Check if it's a known location alias
+                if clean_word in self.geocoding_service.location_aliases:
+                    return self.geocoding_service.location_aliases[clean_word]
         
         return None
     

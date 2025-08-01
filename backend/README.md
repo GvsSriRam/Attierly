@@ -1,6 +1,6 @@
 # Attierly Backend - AI Fashion Assistant
 
-A microservices-based AI fashion assistant with React reasoning and intelligent tool selection.
+A microservices-based AI fashion assistant with Simple Multi-Agent Architecture and intelligent tool selection.
 
 ## 🚀 Quick Start
 
@@ -42,17 +42,17 @@ python -m uvicorn services.ecommerce_service.main:app --host 0.0.0.0 --port 8003
 
 | Service | Port | Description |
 |---------|------|-------------|
-| AI Orchestrator | 8000 | Main AI service with React reasoning |
+| AI Orchestrator | 8000 | Main AI service with Simple Multi-Agent Architecture |
 | User Service | 8002 | User profile management |
 | Ecommerce Service | 8003 | Product search and recommendations |
 
 ## 🛠️ Features
 
-### React Agent
-- **Observe-Think-Act** reasoning pattern
-- **Dynamic tool selection** based on query context
-- **User context integration** for personalized responses
-- **Intelligent reasoning** with iterative problem solving
+### Simple Multi-Agent System
+- **Three Specialized Agents**: Intent Agent, Context Agent, Task Agent
+- **Sequential Processing**: Each agent builds on the previous agent's output
+- **Tool-Based Architecture**: Modular tools for location, weather, occasion, and style inference
+- **Real-time Weather Integration**: Live weather data for location-aware recommendations
 
 ### Available Tools
 - **Location Inference**: Understand user location and places
@@ -60,10 +60,10 @@ python -m uvicorn services.ecommerce_service.main:app --host 0.0.0.0 --port 8003
 - **Occasion Inference**: Determine event type and formality
 - **Style Inference**: Analyze user style preferences
 
-### Enhanced Prompts
-- **Dynamic system prompts** with available tools and user context
-- **Step-specific prompts** for observation, thinking, and response generation
-- **Tool usage guidelines** for better reasoning
+### Agent Workflow
+- **Intent Agent**: Analyzes user intent (fashion, location, weather, general, hybrid)
+- **Context Agent**: Gathers context using specialized tools (location, weather, occasion, style)
+- **Task Agent**: Generates final recommendations using all gathered context
 - **User profile integration** for personalized recommendations
 
 ## 📁 Project Structure
@@ -71,7 +71,7 @@ python -m uvicorn services.ecommerce_service.main:app --host 0.0.0.0 --port 8003
 ```
 backend/
 ├── services/
-│   ├── ai_orchestrator/     # Main AI service with React agent
+│   ├── ai_orchestrator/     # Main AI service with Simple Multi-Agent Architecture
 │   ├── user_service/        # User profile management
 │   └── ecommerce_service/   # Product search and recommendations
 ├── start_local.py          # Automatic startup script
