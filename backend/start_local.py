@@ -22,8 +22,7 @@ def start_service(name, port, module_path):
         sys.executable, "-m", "uvicorn", 
         module_path, 
         "--host", "0.0.0.0", 
-        "--port", str(port),
-        "--reload"
+        "--port", str(port)
     ]
     
     try:
@@ -67,7 +66,7 @@ def main():
         print("   • AI Orchestrator: http://localhost:8000")
         print("   • User Service: http://localhost:8002")
         print("   • E-commerce Service: http://localhost:8003")
-        print("\n🌐 Frontend: Open chatbot_test.html in your browser")
+        print("\n🌐 API Testing: Use tools like Postman or curl to test the endpoints")
         print("\n⏹️  Press Ctrl+C to stop all services")
         
         # Keep the script running

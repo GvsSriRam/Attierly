@@ -7,31 +7,33 @@ import traceback
 from typing import Dict, Any, Optional
 import aiohttp
 
-from ..infrastructure.agent import FashionAgent
+from ..infrastructure.simple_multi_agent_orchestrator import SimpleMultiAgentOrchestrator
 from ..infrastructure.configuration import config
 
 logger = logging.getLogger(__name__)
 
 class ProcessAIRequestUseCase:
-    """Use case for processing AI requests."""
+    """Use case for processing AI requests using multi-agent workflow."""
     
     def __init__(self):
-        self.fashion_agent = None
+        self.multi_agent_orchestrator = None
         self.logger = logging.getLogger(__name__)
     
     async def execute(self, user_message: str, user_id: Optional[str] = None, 
-                     session_id: str = "default", task_type: str = "recommendation") -> Dict[str, Any]:
+                     session_id: str = "default", task_type: str = "recommendation",
+                     user_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Execute the AI request processing use case."""
         try:
             self.logger.info(f"Processing AI request - Task: {task_type}, Session: {session_id}")
             
-            # Initialize FashionAgent if not already done
-            if not self.fashion_agent:
-                await self._initialize_fashion_agent()
+            # Initialize SimpleMultiAgentOrchestrator if not already done
+            if not self.multi_agent_orchestrator:
+                await self._initialize_multi_agent_orchestrator()
             
-            # Get user context if user_id is provided
-            user_context = None
-            if user_id:
+            # Use provided user_context or get from user service
+            if user_context is not None:
+                self.logger.info(f"Using provided user_context: {user_context}")
+            elif user_id:
                 self.logger.info(f"Getting user context for user_id: {user_id}")
                 user_context = await self._get_user_context(user_id)
                 self.logger.info(f"Received user_context: {user_context}, type: {type(user_context)}")
@@ -51,21 +53,23 @@ class ProcessAIRequestUseCase:
             self.logger.info(f"About to merge preferences with user_context: {user_context}")
             merged_preferences = self._merge_preferences(user_context or {})
             
-            # Process the request with FashionAgent
-            self.logger.info("Using FashionAgent with tools and chains...")
-            response = await self.fashion_agent.process_message(
+            # Process the request with SimpleMultiAgentOrchestrator
+            self.logger.info("Using SimpleMultiAgentOrchestrator...")
+            response = await self.multi_agent_orchestrator.process_message(
                 user_message=user_message,
                 user_profile=merged_preferences
             )
             
-            self.logger.info("FashionAgent processing completed")
+            self.logger.info("SimpleMultiAgentOrchestrator processing completed")
             
             return {
                 "response": response.get("response", "I apologize, but I'm unable to generate a response at this time."),
                 "llm_metadata": response.get("metadata", {}),
                 "user_context": user_context,
                 "task_type": task_type,
-                "session_id": session_id
+                "session_id": session_id,
+                "agents_used": response.get("agents_used", []),
+                "processing_time": response.get("processing_time", 0.0)
             }
             
         except Exception as e:
@@ -80,14 +84,14 @@ class ProcessAIRequestUseCase:
                 "session_id": session_id
             }
     
-    async def _initialize_fashion_agent(self):
-        """Initialize the FashionAgent with tools and chains."""
+    async def _initialize_multi_agent_orchestrator(self):
+        """Initialize the SimpleMultiAgentOrchestrator."""
         try:
-            self.logger.info("Initializing FashionAgent with tools and chains...")
-            self.fashion_agent = FashionAgent()
-            self.logger.info("FashionAgent initialized successfully with tools")
+            self.logger.info("Initializing SimpleMultiAgentOrchestrator...")
+            self.multi_agent_orchestrator = SimpleMultiAgentOrchestrator()
+            self.logger.info("SimpleMultiAgentOrchestrator initialized successfully")
         except Exception as e:
-            self.logger.error(f"Error initializing FashionAgent: {e}")
+            self.logger.error(f"Error initializing SimpleMultiAgentOrchestrator: {e}")
             raise
     
     async def _get_user_context(self, user_id: str) -> Dict[str, Any]:
@@ -185,13 +189,10 @@ class GetServiceHealthUseCase:
     async def execute(self) -> Dict[str, Any]:
         """Execute the health check use case."""
         try:
-            # Check if FashionAgent is initialized
-            agent_status = "initialized" if hasattr(self, 'fashion_agent') and self.fashion_agent else "not_initialized"
-            
             return {
                 "status": "healthy",
                 "service": "ai_orchestrator",
-                "agent_status": agent_status,
+                "agent_status": "simple_multi_agent_available",
                 "config_summary": config.get_config_summary()
             }
         except Exception as e:

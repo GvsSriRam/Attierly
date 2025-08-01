@@ -44,6 +44,7 @@ class SearchRequest(BaseModel):
     """Model for product search request."""
     query: str
     limit: int = 10
+    user_context: Optional[Dict[str, Any]] = None
 
 class RecommendationRequest(BaseModel):
     """Model for product recommendation request."""
@@ -137,13 +138,23 @@ async def search_products(
 async def search_products_get(
     query: str,
     limit: int = 10,
+    user_context: Optional[str] = None,
     use_case: WebScrapingSearchUseCase = Depends(get_search_use_case)
 ) -> SearchResponse:
     """Search products using web scraping (GET endpoint)."""
     try:
         logger.info(f"Searching products with query: {query}")
         
-        result = await use_case.execute(query, limit)
+        # Parse user_context if provided as string
+        parsed_user_context = None
+        if user_context:
+            try:
+                import json
+                parsed_user_context = json.loads(user_context)
+            except:
+                logger.warning(f"Could not parse user_context: {user_context}")
+        
+        result = await use_case.execute(query, limit, user_context=parsed_user_context)
         
         # Map web scraper fields to ProductResponse fields
         mapped_products = []

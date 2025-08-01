@@ -26,8 +26,8 @@ from .interfaces.api import ai_router
 # Create FastAPI app
 app = FastAPI(
     title="AI Orchestrator Service",
-    description="Fashion AI Assistant - Local Edition",
-    version="1.0.0"
+    description="Fashion AI Assistant - Multi-Agent Edition",
+    version="2.0.0"
 )
 
 # Add CORS middleware
@@ -45,7 +45,7 @@ app.include_router(ai_router)
 @app.on_event("startup")
 async def startup_event():
     """Application startup event."""
-    logger.info("AI Orchestrator Service starting up...")
+    logger.info("AI Orchestrator Service (Multi-Agent) starting up...")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -57,8 +57,8 @@ async def root():
     """Root endpoint."""
     return {
         "service": "AI Orchestrator",
-        "version": "1.0.0",
-        "description": "Fashion AI Assistant - Local Edition",
+        "version": "2.0.0",
+        "description": "Fashion AI Assistant - Multi-Agent Edition",
         "status": "running"
     }
 

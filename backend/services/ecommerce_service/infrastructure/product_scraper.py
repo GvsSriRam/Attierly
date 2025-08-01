@@ -45,20 +45,26 @@ class ProductScraper:
         if self.session:
             await self.session.close()
     
-    async def search_products(self, query: str, category: str = "fashion", limit: int = 5) -> List[Dict[str, Any]]:
+    async def search_products(self, query: str, category: str = "fashion", limit: int = 5, 
+                            user_context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """
-        Search for products using real web scraping.
+        Search for products using real web scraping with context-aware filtering.
         
         Args:
             query: Search query
             category: Product category
             limit: Maximum number of results
+            user_context: User context including gender, budget, style preferences
             
         Returns:
             List of product dictionaries
         """
         try:
             products = []
+            
+            # Enhance query with context information
+            enhanced_query = self._enhance_query_with_context(query, user_context)
+            logger.info(f"Enhanced query: {enhanced_query}")
             
             # Strategy 1: Search accessible fashion sites
             accessible_sites = [
@@ -74,8 +80,10 @@ class ProductScraper:
                     break
                     
                 try:
-                    site_products = await self._search_accessible_site(base_url, query, site_name, limit - len(products))
-                    products.extend(site_products)
+                    site_products = await self._search_accessible_site(base_url, enhanced_query, site_name, limit - len(products))
+                    # Filter products based on user context
+                    filtered_products = self._filter_products_by_context(site_products, user_context)
+                    products.extend(filtered_products)
                     await asyncio.sleep(2)  # Be respectful to servers
                 except Exception as e:
                     logger.warning(f"Error searching {site_name}: {e}")
@@ -101,6 +109,92 @@ class ProductScraper:
         except Exception as e:
             logger.error(f"Error in product search: {e}")
             raise e  # Don't fall back to mock data
+    
+    def _enhance_query_with_context(self, query: str, user_context: Dict[str, Any] = None) -> str:
+        """Enhance search query with user context information."""
+        if not user_context:
+            return query
+        
+        enhanced_parts = [query]
+        
+        # Add gender-specific terms
+        gender = user_context.get("gender_preference", "").lower()
+        if gender == "male":
+            enhanced_parts.extend(["men", "mens", "male"])
+        elif gender == "female":
+            enhanced_parts.extend(["women", "womens", "female"])
+        
+        # Add style-specific terms
+        style = user_context.get("style_preference", "").lower()
+        if style == "casual":
+            enhanced_parts.extend(["casual", "comfortable", "relaxed"])
+        elif style == "formal":
+            enhanced_parts.extend(["formal", "professional", "business"])
+        elif style == "elegant":
+            enhanced_parts.extend(["elegant", "sophisticated", "luxury"])
+        
+        # Add budget-specific terms
+        budget = user_context.get("budget_range", "").lower()
+        if budget == "low":
+            enhanced_parts.extend(["affordable", "budget", "cheap"])
+        elif budget == "high":
+            enhanced_parts.extend(["premium", "luxury", "designer"])
+        
+        return " ".join(enhanced_parts)
+    
+    def _filter_products_by_context(self, products: List[Dict[str, Any]], user_context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """Filter products based on user context."""
+        if not user_context or not products:
+            return products
+        
+        filtered_products = []
+        gender = user_context.get("gender_preference", "").lower()
+        budget = user_context.get("budget_range", "").lower()
+        
+        for product in products:
+            # Gender filtering
+            if gender:
+                title = product.get("title", "").lower()
+                description = product.get("description", "").lower()
+                
+                if gender == "male":
+                    # Filter out women's clothing terms
+                    women_terms = ["women", "womens", "female", "ladies", "girls", "she", "her"]
+                    if any(term in title or term in description for term in women_terms):
+                        continue
+                    # Ensure it contains men's terms
+                    men_terms = ["men", "mens", "male", "guys", "boys", "he", "his"]
+                    if not any(term in title or term in description for term in men_terms):
+                        # Add men's context if not present
+                        product["title"] = f"Men's {product.get('title', '')}"
+                
+                elif gender == "female":
+                    # Filter out men's clothing terms
+                    men_terms = ["men", "mens", "male", "guys", "boys", "he", "his"]
+                    if any(term in title or term in description for term in men_terms):
+                        continue
+                    # Ensure it contains women's terms
+                    women_terms = ["women", "womens", "female", "ladies", "girls", "she", "her"]
+                    if not any(term in title or term in description for term in women_terms):
+                        # Add women's context if not present
+                        product["title"] = f"Women's {product.get('title', '')}"
+            
+            # Budget filtering (basic price range)
+            price = product.get("price", 0)
+            if isinstance(price, str):
+                try:
+                    price = float(price.replace("$", "").replace(",", ""))
+                except:
+                    price = 0
+            
+            if budget == "low" and price > 50:
+                continue
+            elif budget == "high" and price < 100:
+                continue
+            
+            filtered_products.append(product)
+        
+        return filtered_products
     
     async def _search_accessible_site(self, base_url: str, query: str, site_name: str, limit: int) -> List[Dict[str, Any]]:
         """Search accessible fashion sites."""
@@ -590,10 +684,11 @@ class EcommerceService:
     def __init__(self):
         self.scraper = None
     
-    async def search_products(self, query: str, category: str = "fashion", limit: int = 5) -> List[Dict[str, Any]]:
-        """Search for products."""
+    async def search_products(self, query: str, category: str = "fashion", limit: int = 5, 
+                            user_context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """Search for products with context-aware filtering."""
         async with ProductScraper() as scraper:
-            return await scraper.search_products(query, category, limit)
+            return await scraper.search_products(query, category, limit, user_context)
     
     async def get_product_details(self, product_url: str) -> Optional[Dict[str, Any]]:
         """Get product details."""

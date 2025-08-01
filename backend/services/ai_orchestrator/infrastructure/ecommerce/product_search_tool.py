@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 class ProductSearchTool(BaseTool):
     """Product search tool using web scraping approach."""
     
-    def __init__(self, serpapi_key: str = None):
+    def __init__(self, serpapi_key: str = None, user_context: Dict[str, Any] = None):
         super().__init__(ToolType.ECOMMERCE, "product_search")
-        self.aggregator = ProductAggregator(serpapi_key=serpapi_key)
+        self.aggregator = ProductAggregator(serpapi_key=serpapi_key, user_context=user_context)
     
     async def execute(self, keywords: str, category: str = None, 
                      max_results: int = 10, sort_by: str = "relevance",

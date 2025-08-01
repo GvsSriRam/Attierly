@@ -3,7 +3,7 @@ API endpoints for AI Orchestrator Service.
 """
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import logging
 
 from ..application.use_cases import (
@@ -24,6 +24,7 @@ class AIRequestModel(BaseModel):
     user_id: Optional[str] = None
     session_id: str = "default"
     task_type: str = "recommendation"
+    user_context: Optional[Dict[str, Any]] = None
 
 class AIResponseModel(BaseModel):
     """Model for AI response."""
@@ -32,6 +33,8 @@ class AIResponseModel(BaseModel):
     user_context: Optional[Dict[str, Any]] = None
     task_type: str
     session_id: str
+    agents_used: Optional[List[str]] = None
+    processing_time: Optional[float] = None
     error: Optional[str] = None
 
 class HealthResponseModel(BaseModel):
@@ -67,7 +70,7 @@ async def process_ai_request(
     request: AIRequestModel,
     use_case: ProcessAIRequestUseCase = Depends(get_process_use_case)
 ) -> AIResponseModel:
-    """Process an AI request."""
+    """Process an AI request using simple multi-agent workflow."""
     try:
         logger.info(f"Received AI request: {request.user_message[:100]}...")
         
@@ -75,7 +78,8 @@ async def process_ai_request(
             user_message=request.user_message,
             user_id=request.user_id,
             session_id=request.session_id,
-            task_type=request.task_type
+            task_type=request.task_type,
+            user_context=request.user_context
         )
         
         return AIResponseModel(
@@ -84,6 +88,8 @@ async def process_ai_request(
             user_context=result.get("user_context"),
             task_type=result.get("task_type", request.task_type),
             session_id=result.get("session_id", request.session_id),
+            agents_used=result.get("agents_used"),
+            processing_time=result.get("processing_time"),
             error=result.get("error")
         )
         
@@ -141,8 +147,14 @@ async def root():
     """Root endpoint."""
     return {
         "service": "AI Orchestrator",
-        "version": "1.0.0",
-        "description": "Fashion AI Assistant - Local Edition",
+        "version": "2.0.0",
+        "description": "Fashion AI Assistant - Simple Multi-Agent Edition",
+        "architecture": "Simple Multi-Agent System",
+        "agents": [
+            "Intent Recognition Agent",
+            "Context Analysis Agent", 
+            "Task Execution Agent"
+        ],
         "endpoints": {
             "process": "/ai/process",
             "health": "/ai/health",

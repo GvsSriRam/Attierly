@@ -74,11 +74,13 @@ class ToolRegistry:
     
     def __init__(self):
         self._tools: Dict[str, BaseTool] = {}
+        self._tool_capabilities: Dict[str, List[str]] = {}
     
-    def register_tool(self, tool: BaseTool):
-        """Register a tool in the registry."""
+    def register_tool(self, tool: BaseTool, capabilities: List[str] = None):
+        """Register a tool in the registry with capabilities."""
         self._tools[tool.name] = tool
-        logger.info(f"Registered tool: {tool.name} ({tool.tool_type.value})")
+        self._tool_capabilities[tool.name] = capabilities or []
+        logger.info(f"Registered tool: {tool.name} ({tool.tool_type.value}) with capabilities: {capabilities}")
     
     def get_tool(self, name: str) -> Optional[BaseTool]:
         """Get a tool by name."""
@@ -88,9 +90,59 @@ class ToolRegistry:
         """Get all tools of a specific type."""
         return [tool for tool in self._tools.values() if tool.tool_type == tool_type]
     
+    def get_tools_by_capability(self, capability: str) -> List[BaseTool]:
+        """Get all tools that have a specific capability."""
+        matching_tools = []
+        for tool_name, tool in self._tools.items():
+            if capability in self._tool_capabilities.get(tool_name, []):
+                matching_tools.append(tool)
+        return matching_tools
+    
+    def get_tools_for_query(self, query: str) -> List[BaseTool]:
+        """Get tools that are relevant for a specific query."""
+        query_lower = query.lower()
+        relevant_tools = []
+        
+        # Define query-tool mappings
+        query_tool_mappings = {
+            'location': ['location_inference'],
+            'weather': ['weather_inference'],
+            'occasion': ['occasion_inference'],
+            'style': ['style_inference'],
+            'fashion': ['style_inference', 'occasion_inference'],
+            'outfit': ['style_inference', 'occasion_inference'],
+            'clothing': ['style_inference', 'occasion_inference'],
+            'where': ['location_inference'],
+            'temperature': ['weather_inference'],
+            'party': ['occasion_inference'],
+            'work': ['occasion_inference'],
+            'casual': ['style_inference', 'occasion_inference'],
+            'formal': ['style_inference', 'occasion_inference']
+        }
+        
+        # Find matching tools based on query keywords
+        for keyword, tool_names in query_tool_mappings.items():
+            if keyword in query_lower:
+                for tool_name in tool_names:
+                    tool = self.get_tool(tool_name)
+                    if tool and tool not in relevant_tools:
+                        relevant_tools.append(tool)
+        
+        return relevant_tools
+    
     def list_tools(self) -> Dict[str, str]:
         """List all registered tools with their types."""
         return {name: tool.tool_type.value for name, tool in self._tools.items()}
+    
+    def list_tools_with_capabilities(self) -> Dict[str, Dict[str, Any]]:
+        """List all registered tools with their types and capabilities."""
+        return {
+            name: {
+                "type": tool.tool_type.value,
+                "capabilities": self._tool_capabilities.get(name, [])
+            }
+            for name, tool in self._tools.items()
+        }
 
 
 class FallbackManager:
@@ -449,8 +501,8 @@ class WeatherInferenceTool(BaseTool):
         except Exception as e:
             return self._create_error_result(str(e))
 
-# Register all tools
-tool_registry.register_tool(LocationInferenceTool())
-tool_registry.register_tool(OccasionInferenceTool())
-tool_registry.register_tool(StyleInferenceTool())
-tool_registry.register_tool(WeatherInferenceTool()) 
+# Register all tools with capabilities
+tool_registry.register_tool(LocationInferenceTool(), capabilities=["location_detection", "geocoding", "place_analysis"])
+tool_registry.register_tool(OccasionInferenceTool(), capabilities=["occasion_detection", "formality_analysis", "event_classification"])
+tool_registry.register_tool(StyleInferenceTool(), capabilities=["style_analysis", "fashion_classification", "preference_detection"])
+tool_registry.register_tool(WeatherInferenceTool(), capabilities=["weather_detection", "temperature_analysis", "climate_conditions"]) 

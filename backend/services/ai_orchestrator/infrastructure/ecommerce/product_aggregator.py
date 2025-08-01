@@ -17,17 +17,21 @@ logger = logging.getLogger(__name__)
 class ProductAggregator:
     """Main product aggregator with hybrid approach and intelligent fallback."""
     
-    def __init__(self, serpapi_key: str = None):
+    def __init__(self, serpapi_key: str = None, user_context: Dict[str, Any] = None):
         """
         Initialize the product aggregator.
         
         Args:
             serpapi_key: SERPAPI key for fallback (optional)
+            user_context: User context for personalized search
         """
         self.cache_service = ProductCacheService()
         
         # Initialize APIs - Amazon and eBay APIs are disabled
         self.serpapi_key = serpapi_key
+        
+        # Store user context for personalized search
+        self.user_context = user_context
         
         # Amazon and eBay APIs are disabled - using web scraping only
         logger.info("Amazon and eBay APIs are disabled - using web scraping only")
@@ -118,11 +122,20 @@ class ProductAggregator:
             
             # Call the ecommerce service for web scraping
             url = "http://localhost:8003/ecommerce/scrape/search"
+            # Prepare user context for web scraping
+            user_context_param = None
+            if hasattr(self, 'user_context') and self.user_context:
+                import json
+                user_context_param = json.dumps(self.user_context)
+            
             params = {
                 'query': keywords,
                 'category': category or 'fashion',
                 'limit': max_results
             }
+            
+            if user_context_param:
+                params['user_context'] = user_context_param
             
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attierly - AI Fashion Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-tshirt"></i>
+                    <h1>Attierly</h1>
+                </div>
+                <p class="tagline">Your AI Fashion Assistant</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Profile Section -->
+            <div class="profile-section" id="profileSection">
+                <div class="profile-card">
+                    <h3><i class="fas fa-user-circle"></i> Your Profile</h3>
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label for="gender">Gender:</label>
+                            <select id="gender" class="form-control">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="non-binary">Non-binary</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="style">Style Preference:</label>
+                            <select id="style" class="form-control">
+                                <option value="">Select Style</option>
+                                <option value="casual">Casual</option>
+                                <option value="formal">Formal</option>
+                                <option value="business">Business</option>
+                                <option value="streetwear">Streetwear</option>
+                                <option value="vintage">Vintage</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="budget">Budget Range:</label>
+                            <select id="budget" class="form-control">
+                                <option value="">Select Budget</option>
+                                <option value="low">Low ($)</option>
+                                <option value="medium">Medium ($$)</option>
+                                <option value="high">High ($$$)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveProfile()">
+                            <i class="fas fa-save"></i> Save Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Section -->
+            <div class="chat-section">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <h3><i class="fas fa-comments"></i> Chat with Attierly</h3>
+                        <div class="status-indicator" id="statusIndicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Ready</span>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-content">
+                                <i class="fas fa-robot"></i>
+                                <div class="message-text">
+                                    <p>Hello! I'm Attierly, your AI fashion assistant. I can help you with:</p>
+                                    <ul>
+                                        <li>Fashion recommendations for any occasion</li>
+                                        <li>Weather-appropriate outfit suggestions</li>
+                                        <li>Style advice based on your preferences</li>
+                                        <li>Location-specific fashion tips</li>
+                                    </ul>
+                                    <p>Try asking me something like: "What should I wear for a party in NYC?" or "I need a work outfit for a meeting"</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <div class="input-group">
+                            <input type="text" id="messageInput" class="message-input" 
+                                   placeholder="Ask me about fashion, style, or outfits..." 
+                                   onkeypress="handleKeyPress(event)">
+                            <button class="send-btn" onclick="sendMessage()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="quick-btn" onclick="sendQuickMessage('What should I wear for a job interview?')">
+                                Job Interview
+                            </button>
+                            <button class="quick-btn" onclick="sendQuickMessage('I need a casual outfit for a weekend brunch')">
+                                Weekend Brunch
+                            </button>
+                            <button class="quick-btn" onclick="sendQuickMessage('What\'s the weather like in Miami?')">
+                                Weather Check
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services Status -->
+            <div class="services-section">
+                <div class="services-card">
+                    <h3><i class="fas fa-server"></i> Services Status</h3>
+                    <div class="service-status" id="serviceStatus">
+                        <div class="service-item">
+                            <span class="service-name">AI Orchestrator</span>
+                            <span class="service-status-dot" id="aiStatus"></span>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-name">User Service</span>
+                            <span class="service-status-dot" id="userStatus"></span>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-name">E-commerce Service</span>
+                            <span class="service-status-dot" id="ecommerceStatus"></span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="checkServices()">
+                        <i class="fas fa-sync-alt"></i> Check Services
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processing your request...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

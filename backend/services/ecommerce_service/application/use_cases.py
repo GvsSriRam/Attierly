@@ -18,14 +18,14 @@ class WebScrapingSearchUseCase:
         self.scraper_service = EcommerceService()
         self.logger = logging.getLogger(__name__)
     
-    async def execute(self, query: str, limit: int = 10) -> Dict[str, Any]:
+    async def execute(self, query: str, limit: int = 10, user_context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Execute the web scraping search use case."""
         try:
             start_time = time.time()
-            self.logger.info(f"Starting web scraping search for query: {query}")
+            self.logger.info(f"Starting web scraping search for query: {query} with context: {user_context}")
             
-            # Search for products using web scraping
-            products = await self.scraper_service.search_products(query, limit)
+            # Search for products using web scraping with context
+            products = await self.scraper_service.search_products(query, limit, user_context=user_context)
             
             processing_time = time.time() - start_time
             self.logger.info(f"Web scraping search completed in {processing_time:.3f}s, found {len(products)} products")
