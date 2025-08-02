@@ -1,6 +1,6 @@
 # Attierly Architecture
 
-Simple Multi-Agent Architecture with three specialized agents working sequentially for intelligent fashion recommendations.
+CrewAI Multi-Agent Architecture with four specialized agents working sequentially for intelligent fashion recommendations.
 
 ## System Architecture
 
@@ -19,21 +19,20 @@ Simple Multi-Agent Architecture with three specialized agents working sequential
               └──────────┘ └─────┘ └─────────┘
 ```
 
-## AI Orchestrator - Simple Multi-Agent System
+## AI Orchestrator - CrewAI Multi-Agent System
 
 ### Agent Workflow
 ```
-User Message → Intent Agent → Context Agent → Task Agent → Response
+User Message → Intent Agent → Context Agent → Fashion Agent → Recommendation Agent → Response
 ```
 
 ### Agent Roles
-
 1. **Intent Agent**: Analyzes user intent (fashion, location, weather, general, hybrid)
 2. **Context Agent**: Gathers context using tools (location, weather, occasion, style)
-3. **Task Agent**: Generates final recommendations using all gathered context
+3. **Fashion Agent**: Analyzes fashion requirements and creates style recommendations
+4. **Recommendation Agent**: Creates appropriate responses based on intent type
 
 ### Available Tools
-
 - **Location Inference**: Extract and geocode user locations
 - **Weather Service**: Get real-time weather conditions
 - **Occasion Inference**: Determine event type and formality
@@ -43,10 +42,18 @@ User Message → Intent Agent → Context Agent → Task Agent → Response
 
 ### Request Processing
 1. **User Request**: POST to `/ai/process` with message and context
-2. **Intent Analysis**: Intent Agent classifies request type
-3. **Context Analysis**: Context Agent executes relevant tools
-4. **Task Execution**: Task Agent generates recommendations
-5. **Response**: Returns personalized fashion advice with metadata
+2. **Intent Analysis**: Intent Agent classifies request type (fashion/weather/location/general/hybrid)
+3. **Context Analysis**: Context Agent executes relevant tools based on intent
+4. **Fashion Analysis**: Fashion Agent analyzes style requirements (for fashion queries)
+5. **Response Generation**: Recommendation Agent creates appropriate response based on intent
+6. **Response**: Returns intent-appropriate advice with metadata
+
+### Intent Types & Responses
+- **Fashion**: Concise outfit recommendations with structure (Main Outfit, Quick Tips, Budget Options, Occasion-Specific)
+- **Weather**: Current weather info + temperature-appropriate clothing suggestions
+- **Location**: Location context + location-specific fashion/lifestyle tips
+- **General**: Friendly, helpful responses with fashion assistance offers
+- **Hybrid**: Comprehensive coverage of multiple aspects
 
 ### Example Request
 ```json
@@ -63,8 +70,8 @@ User Message → Intent Agent → Context Agent → Task Agent → Response
 
 ## Key Components
 
-### SimpleMultiAgentOrchestrator
-- Coordinates all three agents sequentially
+### CrewAIOrchestrator
+- Coordinates all four agents sequentially
 - Handles errors and fallbacks
 - Calculates overall confidence scores
 

@@ -103,11 +103,12 @@ class CrewAIOrchestrator:
         """Create the intent analysis agent."""
         return Agent(
             role="Intent Analyzer",
-            goal="Analyze user intent and classify the request type accurately",
+            goal="Analyze user intent and classify request type accurately",
             backstory="""You are an expert at understanding user requests and classifying their intent. 
             You have deep knowledge of fashion terminology, user behavior patterns, and can distinguish 
             between different types of requests like outfit recommendations, style advice, weather-related 
-            clothing, location-based suggestions, and general fashion questions.""",
+            clothing, location-based suggestions, general fashion questions, and non-fashion queries.
+            You provide clear reasoning for your classification.""",
             verbose=True,
             allow_delegation=False,
             tools=[],
@@ -118,10 +119,11 @@ class CrewAIOrchestrator:
         """Create the context analysis agent."""
         return Agent(
             role="Context Analyzer",
-            goal="Gather and analyze relevant context for fashion recommendations",
+            goal="Gather comprehensive context including location, weather, and occasion",
             backstory="""You are an expert at analyzing user context including location, weather, 
-            occasion, style preferences, and personal information. You use various tools to gather 
-            comprehensive context that will help create personalized fashion recommendations.""",
+            occasion, and style preferences. You automatically use weather tools for any location 
+            mentioned and provide comprehensive context that helps create personalized fashion 
+            recommendations. You're proactive about gathering relevant information.""",
             verbose=True,
             allow_delegation=True,
             tools=self._get_context_tools(),
@@ -147,11 +149,13 @@ class CrewAIOrchestrator:
         """Create the final recommendation agent."""
         return Agent(
             role="Fashion Recommendation Specialist",
-            goal="Create comprehensive, personalized fashion recommendations",
-            backstory="""You are a fashion recommendation specialist who takes all the analyzed 
-            information and creates detailed, actionable fashion advice. You provide specific outfit 
-            suggestions, styling tips, and shopping recommendations. You always respect user preferences 
-            and provide gender-appropriate recommendations.""",
+            goal="Create appropriate responses based on user intent",
+            backstory="""You are a fashion recommendation specialist who creates appropriate responses 
+            based on user intent. For fashion queries, you provide concise, personalized fashion advice. 
+            For weather queries, you provide weather information and clothing suggestions. For location 
+            queries, you provide location information and context. For general queries, you provide 
+            helpful, friendly responses. You always respect user preferences and provide gender-appropriate 
+            recommendations when relevant.""",
             verbose=True,
             allow_delegation=False,
             tools=[],
@@ -366,30 +370,48 @@ class CrewAIOrchestrator:
         # Task 4: Final Recommendations
         recommendation_task = Task(
             description=f"""
-            Create comprehensive, personalized fashion recommendations.
+            Create appropriate responses based on user intent.
             
             USER MESSAGE: "{user_message}"
             {profile_info}
             
-            Based on all previous analysis, provide:
-            1. Detailed outfit recommendations (respecting gender preferences)
-            2. Specific items to consider
-            3. Styling tips and advice
-            4. Shopping suggestions (if applicable)
-            5. Additional considerations
+            Based on the intent analysis and context, provide an appropriate response:
+            
+            For FASHION intent:
+            - Provide concise fashion recommendations with:
+              1. **Main Outfit**: 2-3 key pieces (be specific)
+              2. **Quick Tips**: 1-2 styling tips
+              3. **Budget Options**: 1-2 affordable stores (vary by occasion)
+              4. **Occasion-Specific**: Focus on what makes this outfit perfect for this specific request
+            
+            For WEATHER intent:
+            - Provide current weather information and clothing suggestions
+            - Include temperature-appropriate outfit recommendations
+            
+            For LOCATION intent:
+            - Provide location information and context
+            - Include location-specific fashion or lifestyle suggestions
+            
+            For GENERAL intent:
+            - Provide helpful, friendly responses
+            - Offer to help with fashion-related questions
+            
+            For HYBRID intent:
+            - Address all aspects of the request
+            - Provide comprehensive but concise responses
             
             CRITICAL RULES:
-            - ALWAYS check the user's gender first
+            - ALWAYS check the user's gender first for fashion recommendations
             - For MALE users: ONLY recommend men's clothing, shoes, and accessories
             - For FEMALE users: ONLY recommend women's clothing, shoes, and accessories
-            - For UNKNOWN gender: Ask for clarification before making recommendations
+            - For UNKNOWN gender: Ask for clarification before making fashion recommendations
             - Consider their style preference and budget
-            - Show your reasoning process clearly
+            - Keep responses concise and specific
             
-            Be specific, helpful, and always respect gender preferences.
+            Be helpful, specific, and always respect user preferences.
             """,
             agent=self.recommendation_agent,
-            expected_output="Comprehensive fashion recommendations with detailed outfit suggestions and styling advice",
+            expected_output="Appropriate response based on user intent with relevant information and recommendations",
             context=[intent_task, context_task, fashion_task]
         )
         

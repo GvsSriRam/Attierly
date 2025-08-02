@@ -25,7 +25,7 @@ class AIRequestModel(BaseModel):
     session_id: str = "default"
     task_type: str = "recommendation"
     user_context: Optional[Dict[str, Any]] = None
-    orchestrator_type: str = "simple"  # "simple" or "crewai"
+    orchestrator_type: str = "crewai"  # "simple" or "crewai"
 
 class AIResponseModel(BaseModel):
     """Model for AI response."""

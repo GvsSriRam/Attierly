@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ProcessAIRequestUseCase:
     """Use case for processing AI requests using multi-agent workflow."""
     
-    def __init__(self, orchestrator_type: str = "simple"):
+    def __init__(self, orchestrator_type: str = "crewai"):
         self.orchestrator_type = orchestrator_type
         self.multi_agent_orchestrator = None
         self.crewai_orchestrator = None

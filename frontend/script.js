@@ -90,6 +90,7 @@ async function sendMessage() {
             user_id: 'frontend_user',
             session_id: 'web_session',
             task_type: 'recommendation',
+            orchestrator_type: 'crewai',
             user_context: {
                 gender_preference: currentProfile.gender || 'unknown',
                 style_preference: currentProfile.style || 'casual',
