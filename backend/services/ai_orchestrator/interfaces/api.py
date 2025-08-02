@@ -25,6 +25,7 @@ class AIRequestModel(BaseModel):
     session_id: str = "default"
     task_type: str = "recommendation"
     user_context: Optional[Dict[str, Any]] = None
+    orchestrator_type: str = "simple"  # "simple" or "crewai"
 
 class AIResponseModel(BaseModel):
     """Model for AI response."""
@@ -70,9 +71,13 @@ async def process_ai_request(
     request: AIRequestModel,
     use_case: ProcessAIRequestUseCase = Depends(get_process_use_case)
 ) -> AIResponseModel:
-    """Process an AI request using simple multi-agent workflow."""
+    """Process an AI request using multi-agent workflow."""
     try:
-        logger.info(f"Received AI request: {request.user_message[:100]}...")
+        logger.info(f"Received AI request with orchestrator: {request.orchestrator_type}")
+        logger.info(f"Request message: {request.user_message[:100]}...")
+        
+        # Set the orchestrator type for this request
+        use_case.orchestrator_type = request.orchestrator_type
         
         result = await use_case.execute(
             user_message=request.user_message,

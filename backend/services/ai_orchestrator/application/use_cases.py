@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 import aiohttp
 
 from ..infrastructure.simple_multi_agent_orchestrator import SimpleMultiAgentOrchestrator
+from ..infrastructure.crewai_orchestrator import CrewAIOrchestrator
 from ..infrastructure.configuration import config
 
 logger = logging.getLogger(__name__)
@@ -15,8 +16,10 @@ logger = logging.getLogger(__name__)
 class ProcessAIRequestUseCase:
     """Use case for processing AI requests using multi-agent workflow."""
     
-    def __init__(self):
+    def __init__(self, orchestrator_type: str = "simple"):
+        self.orchestrator_type = orchestrator_type
         self.multi_agent_orchestrator = None
+        self.crewai_orchestrator = None
         self.logger = logging.getLogger(__name__)
     
     async def execute(self, user_message: str, user_id: Optional[str] = None, 
@@ -26,9 +29,13 @@ class ProcessAIRequestUseCase:
         try:
             self.logger.info(f"Processing AI request - Task: {task_type}, Session: {session_id}")
             
-            # Initialize SimpleMultiAgentOrchestrator if not already done
-            if not self.multi_agent_orchestrator:
-                await self._initialize_multi_agent_orchestrator()
+            # Initialize appropriate orchestrator if not already done
+            if self.orchestrator_type == "crewai":
+                if not self.crewai_orchestrator:
+                    await self._initialize_crewai_orchestrator()
+            else:
+                if not self.multi_agent_orchestrator:
+                    await self._initialize_multi_agent_orchestrator()
             
             # Use provided user_context or get from user service
             if user_context is not None:
@@ -53,14 +60,21 @@ class ProcessAIRequestUseCase:
             self.logger.info(f"About to merge preferences with user_context: {user_context}")
             merged_preferences = self._merge_preferences(user_context or {})
             
-            # Process the request with SimpleMultiAgentOrchestrator
-            self.logger.info("Using SimpleMultiAgentOrchestrator...")
-            response = await self.multi_agent_orchestrator.process_message(
-                user_message=user_message,
-                user_profile=merged_preferences
-            )
-            
-            self.logger.info("SimpleMultiAgentOrchestrator processing completed")
+            # Process the request with appropriate orchestrator
+            if self.orchestrator_type == "crewai":
+                self.logger.info("Using CrewAI Orchestrator...")
+                response = await self.crewai_orchestrator.process_message(
+                    user_message=user_message,
+                    user_profile=merged_preferences
+                )
+                self.logger.info("CrewAI Orchestrator processing completed")
+            else:
+                self.logger.info("Using SimpleMultiAgentOrchestrator...")
+                response = await self.multi_agent_orchestrator.process_message(
+                    user_message=user_message,
+                    user_profile=merged_preferences
+                )
+                self.logger.info("SimpleMultiAgentOrchestrator processing completed")
             
             return {
                 "response": response.get("response", "I apologize, but I'm unable to generate a response at this time."),
@@ -92,6 +106,16 @@ class ProcessAIRequestUseCase:
             self.logger.info("SimpleMultiAgentOrchestrator initialized successfully")
         except Exception as e:
             self.logger.error(f"Error initializing SimpleMultiAgentOrchestrator: {e}")
+            raise
+    
+    async def _initialize_crewai_orchestrator(self):
+        """Initialize the CrewAI Orchestrator."""
+        try:
+            self.logger.info("Initializing CrewAI Orchestrator...")
+            self.crewai_orchestrator = CrewAIOrchestrator()
+            self.logger.info("CrewAI Orchestrator initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Error initializing CrewAI Orchestrator: {e}")
             raise
     
     async def _get_user_context(self, user_id: str) -> Dict[str, Any]:
