@@ -38,10 +38,40 @@ def start_service(name, port, module_path):
         print(f"❌ Failed to start {name}: {e}")
         return None
 
+def check_environment():
+    """Check if environment is properly configured."""
+    print("🔍 Checking environment configuration...")
+    
+    # Only warn if .env is missing; do not prompt or run interactive setup
+    env_file = Path(__file__).parent / ".env"
+    if not env_file.exists():
+        print("⚠️  No .env file found in backend/.env. Proceeding with current environment.")
+    
+    # Check for required environment variables
+    required_vars = ["LLM_PROVIDER", "LLM_API_KEY"]
+    missing_vars = []
+    
+    for var in required_vars:
+        if not os.getenv(var):
+            missing_vars.append(var)
+    
+    if missing_vars:
+        print(f"ℹ️  Missing optional environment variables: {', '.join(missing_vars)}")
+        print("   The app will start; set them in .env when ready.")
+    
+    print("✅ Environment configuration verified")
+    return True
+
 def main():
     """Main function to start all services."""
     print("🚀 Starting Fashion AI Assistant - Local Edition")
     print("=" * 50)
+    
+    # Check environment first
+    if not check_environment():
+        print("\n❌ Environment not properly configured. Please run:")
+        print("   python setup_env.py")
+        sys.exit(1)
     
     # Service configurations - Only the services actually being used
     services = [

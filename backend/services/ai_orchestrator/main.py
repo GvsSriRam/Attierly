@@ -4,6 +4,7 @@ Main FastAPI application for AI Orchestrator Service.
 import sys
 import os
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,11 +24,42 @@ except ImportError:
 # Import API router
 from .interfaces.api import ai_router
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events."""
+    # Startup
+    logger.info("AI Orchestrator Service (Multi-Agent) starting up...")
+
+    # Initialize MCP integration
+    try:
+        from .infrastructure.tools import tool_registry
+        if hasattr(tool_registry, 'initialize_mcp_integration'):
+            await tool_registry.initialize_mcp_integration()
+            logger.info("MCP integration initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize MCP integration: {e}")
+
+    yield
+
+    # Shutdown
+    logger.info("AI Orchestrator Service shutting down...")
+
+    # Shutdown MCP servers
+    try:
+        from .infrastructure.mcp_integration import mcp_manager
+        await mcp_manager.stop_all_servers()
+        logger.info("MCP servers shut down successfully")
+    except Exception as e:
+        logger.error(f"Error shutting down MCP servers: {e}")
+
+
 # Create FastAPI app
 app = FastAPI(
     title="AI Orchestrator Service",
     description="Fashion AI Assistant - Multi-Agent Edition",
-    version="2.0.0"
+    version="2.0.0",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
@@ -41,16 +73,6 @@ app.add_middleware(
 
 # Include API router
 app.include_router(ai_router)
-
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event."""
-    logger.info("AI Orchestrator Service (Multi-Agent) starting up...")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event."""
-    logger.info("AI Orchestrator Service shutting down...")
 
 @app.get("/")
 async def root():

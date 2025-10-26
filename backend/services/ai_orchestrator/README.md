@@ -24,6 +24,7 @@ User Message → Intent Agent → Context Agent → Fashion Agent → Recommenda
 - **Weather Service**: Get real-time weather conditions
 - **Occasion Inference**: Determine event type and formality
 - **Style Inference**: Analyze user style preferences
+- **MCP Tools**: Calendar, Search, Memory, and File Management integrations
 
 ## Response Types
 

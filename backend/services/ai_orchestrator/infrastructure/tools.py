@@ -209,9 +209,6 @@ class LocationInferenceTool(BaseTool):
     async def execute(self, **kwargs) -> ToolResult:
         """Execute location inference with real geocoding."""
         try:
-            import aiohttp
-            import os
-            import re
             
             user_message = kwargs.get('user_message', '')
             device_info = kwargs.get('device_info', {})
@@ -247,12 +244,8 @@ class LocationInferenceTool(BaseTool):
                     reasoning=f"Using device location fallback: {location}"
                 )
             
-            # Final fallback to NYC
-            return self._create_success_result(
-                data={"name": "New York, NY", "lat": 40.7128, "lng": -74.0060},
-                confidence=0.3,
-                reasoning="No location found, using default NYC location"
-            )
+            # Intelligent location fallback based on user context
+            return self._create_fallback_location(user_context)
             
         except Exception as e:
             return self._create_error_result(str(e))
@@ -383,6 +376,51 @@ class LocationInferenceTool(BaseTool):
             "lat": 40.7128,
             "lng": -74.0060
         }
+    
+    def _create_fallback_location(self, user_context: Dict[str, Any]) -> ToolResult:
+        """Create an intelligent location fallback based on user context."""
+        
+        # Check if user context contains location hints
+        if user_context:
+            # Look for previous location preferences or timezone
+            if 'location' in user_context:
+                location_hint = user_context['location']
+                return self._create_success_result(
+                    data={"name": str(location_hint), "lat": 0.0, "lng": 0.0},
+                    confidence=0.4,
+                    reasoning=f"Using user context location: {location_hint}"
+                )
+            
+            if 'timezone' in user_context:
+                timezone = user_context['timezone']
+                # Map common timezones to representative cities
+                timezone_cities = {
+                    'PST': {'name': 'Los Angeles, CA', 'lat': 34.0522, 'lng': -118.2437},
+                    'MST': {'name': 'Denver, CO', 'lat': 39.7392, 'lng': -104.9903},
+                    'CST': {'name': 'Chicago, IL', 'lat': 41.8781, 'lng': -87.6298},
+                    'EST': {'name': 'New York, NY', 'lat': 40.7128, 'lng': -74.0060},
+                    'UTC': {'name': 'London, UK', 'lat': 51.5074, 'lng': -0.1278}
+                }
+                
+                for tz_abbr, city_data in timezone_cities.items():
+                    if tz_abbr.lower() in timezone.lower():
+                        return self._create_success_result(
+                            data=city_data,
+                            confidence=0.5,
+                            reasoning=f"Using timezone-based location fallback: {timezone}"
+                        )
+        
+        # Ask for location clarification instead of assuming
+        return self._create_success_result(
+            data={
+                "name": "Location Unknown - Please Specify",
+                "lat": None,
+                "lng": None,
+                "requires_clarification": True
+            },
+            confidence=0.1,
+            reasoning="Unable to determine location. Please specify your location for better recommendations."
+        )
 
 
 class OccasionInferenceTool(BaseTool):
@@ -505,4 +543,74 @@ class WeatherInferenceTool(BaseTool):
 tool_registry.register_tool(LocationInferenceTool(), capabilities=["location_detection", "geocoding", "place_analysis"])
 tool_registry.register_tool(OccasionInferenceTool(), capabilities=["occasion_detection", "formality_analysis", "event_classification"])
 tool_registry.register_tool(StyleInferenceTool(), capabilities=["style_analysis", "fashion_classification", "preference_detection"])
-tool_registry.register_tool(WeatherInferenceTool(), capabilities=["weather_detection", "temperature_analysis", "climate_conditions"]) 
+tool_registry.register_tool(WeatherInferenceTool(), capabilities=["weather_detection", "temperature_analysis", "climate_conditions"])
+
+# Initialize MCP integration
+async def initialize_mcp_tools():
+    """Initialize MCP tools and register them with the tool registry."""
+    try:
+        from .mcp_integration import mcp_manager
+        from .simple_mcp_tools import PRODUCTION_MCP_CONFIGS, CalendarTool, WeatherTool, SearchTool, UserPreferencesTool, FileManagementTool
+        from .mcp_config import mcp_config_manager
+        
+        # Get available MCP configurations
+        configs = mcp_config_manager.get_all_available_configs()
+        
+        # Register and start MCP servers
+        for config in configs:
+            mcp_manager.register_server(config)
+            if config.enabled:
+                success = mcp_manager.start_server(config.name)
+                if success:
+                    logger.info(f"Successfully started MCP server: {config.name}")
+                else:
+                    logger.warning(f"Failed to start MCP server: {config.name}")
+        
+        # Register production MCP tools with the tool registry
+        tool_classes = {
+            'calendar': CalendarTool,
+            'weather': WeatherTool,
+            'search': SearchTool,
+            'memory': UserPreferencesTool,
+            'filesystem': FileManagementTool
+        }
+        
+        for config_name, tool_class in tool_classes.items():
+            if config_name in [c.name for c in configs if c.enabled]:
+                tool = tool_class(mcp_manager)
+                capabilities = PRODUCTION_MCP_CONFIGS[config_name].get('capabilities', [])
+                tool_registry.register_tool(tool, capabilities=capabilities)
+                logger.info(f"Registered {config_name} MCP tool")
+        
+        logger.info("Production MCP tools initialization completed")
+        
+    except ImportError as e:
+        logger.warning(f"MCP integration not available: {e}")
+    except Exception as e:
+        logger.error(f"Error initializing MCP tools: {e}")
+
+# Enhanced tool registry with MCP support
+class EnhancedToolRegistry(ToolRegistry):
+    """Enhanced tool registry with MCP server support."""
+    
+    def __init__(self):
+        super().__init__()
+        self.mcp_initialized = False
+    
+    async def initialize_mcp_integration(self):
+        """Initialize MCP integration if not already done."""
+        if not self.mcp_initialized:
+            await initialize_mcp_tools()
+            self.mcp_initialized = True
+    
+    def get_available_mcp_servers(self) -> Dict[str, str]:
+        """Get status of available MCP servers."""
+        try:
+            from .mcp_config import mcp_config_manager
+            validation = mcp_config_manager.validate_mcp_environment()
+            return {k: "available" if v else "not_configured" for k, v in validation.items()}
+        except ImportError:
+            return {"mcp_integration": "not_available"}
+
+# Replace the global tool registry with enhanced version
+tool_registry = EnhancedToolRegistry() 

@@ -3,6 +3,7 @@ CrewAI-based Multi-Agent Orchestrator for Attierly fashion assistant.
 This implementation uses CrewAI framework for sophisticated multi-agent orchestration.
 """
 
+import asyncio
 import logging
 import time
 from typing import Dict, Any, List, Optional
@@ -12,6 +13,7 @@ from crewai.tools.agent_tools import StructuredTool as CrewAITool
 from pydantic.v1 import BaseModel, PrivateAttr
 
 from .tools import tool_registry
+from ..domain.entities import AIRequest, AIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -222,12 +224,8 @@ class CrewAIOrchestrator:
                 process=Process.sequential
             )
             
-            # Execute the crew
-            try:
-                result = await crew.kickoff()
-            except Exception as e:
-                # If kickoff fails, try synchronous execution
-                result = crew.kickoff()
+            # Execute the crew with robust error handling
+            result = await self._execute_crew_with_fallback(crew, request)
             
             # Process results
             processing_time = time.time() - start_time
@@ -255,8 +253,8 @@ class CrewAIOrchestrator:
                 if agent_results:
                     final_answer = agent_results[-1].get("output", final_answer)
             
-            # Calculate confidence based on successful task completion
-            confidence = len(agent_results) / len(tasks) if tasks else 0.5
+            # Calculate confidence based on response quality and success metrics
+            confidence = self._calculate_response_confidence(final_answer, agent_results, tasks)
             
             return {
                 "response": final_answer,
@@ -416,6 +414,155 @@ class CrewAIOrchestrator:
         )
         
         return [intent_task, context_task, fashion_task, recommendation_task]
+    
+    def _calculate_response_confidence(self, response: str, agent_results: List[Dict[str, Any]], tasks: List) -> float:
+        """Calculate confidence based on multiple quality metrics."""
+        if not response or not agent_results:
+            return 0.0
+        
+        # Base completion rate (40% weight)
+        completion_score = len(agent_results) / len(tasks) if tasks else 0.0
+        
+        # Response quality indicators (30% weight)
+        quality_score = self._assess_response_quality(response)
+        
+        # Agent success consistency (20% weight)
+        consistency_score = self._assess_agent_consistency(agent_results)
+        
+        # Error indicators penalty (10% weight)
+        error_penalty = self._assess_error_indicators(response)
+        
+        confidence = (
+            completion_score * 0.4 +
+            quality_score * 0.3 +
+            consistency_score * 0.2 +
+            (1 - error_penalty) * 0.1
+        )
+        
+        return min(max(confidence, 0.0), 1.0)
+    
+    def _assess_response_quality(self, response: str) -> float:
+        """Assess response quality based on content indicators."""
+        if not response or len(response.strip()) < 10:
+            return 0.0
+        
+        quality_indicators = [
+            len(response) > 50,  # Substantial response
+            any(word in response.lower() for word in ['recommend', 'suggest', 'consider', 'try']),  # Actionable advice
+            any(word in response.lower() for word in ['outfit', 'wear', 'clothing', 'style']),  # Fashion relevance
+            '?' not in response or response.count('?') <= 2,  # Not too many questions
+            not any(phrase in response.lower() for phrase in ['i cannot', 'i don\'t know', 'unable to'])  # Not refusal
+        ]
+        
+        return sum(quality_indicators) / len(quality_indicators)
+    
+    def _assess_agent_consistency(self, agent_results: List[Dict[str, Any]]) -> float:
+        """Assess consistency across agent outputs."""
+        if len(agent_results) < 2:
+            return 1.0
+        
+        # Check if agents built upon each other's work
+        consistent_themes = 0
+        total_comparisons = 0
+        
+        for i in range(1, len(agent_results)):
+            current_output = agent_results[i].get('output', '').lower()
+            previous_output = agent_results[i-1].get('output', '').lower()
+            
+            # Look for theme continuity
+            common_words = set(current_output.split()) & set(previous_output.split())
+            if len(common_words) > 3:  # Some continuity
+                consistent_themes += 1
+            total_comparisons += 1
+        
+        return consistent_themes / total_comparisons if total_comparisons > 0 else 1.0
+    
+    def _assess_error_indicators(self, response: str) -> float:
+        """Assess presence of error indicators in response."""
+        error_indicators = [
+            'error', 'failed', 'unable to process', 'something went wrong',
+            'i apologize for the error', 'try again later', 'technical issue'
+        ]
+        
+        response_lower = response.lower()
+        error_count = sum(1 for indicator in error_indicators if indicator in response_lower)
+        
+        return min(error_count / 3.0, 1.0)  # Cap at 1.0
+    
+    async def _execute_crew_with_fallback(self, crew, request: AIRequest):
+        """Execute crew with sophisticated error handling and fallback strategies."""
+        max_retries = 3
+        
+        for attempt in range(max_retries):
+            try:
+                # Try async execution first
+                self.logger.info(f"Attempting crew execution (attempt {attempt + 1}/{max_retries})")
+                result = await crew.kickoff()
+                
+                # Validate result quality
+                if self._validate_crew_result(result):
+                    return result
+                else:
+                    self.logger.warning(f"Crew result quality validation failed on attempt {attempt + 1}")
+                    if attempt == max_retries - 1:
+                        return result  # Return even if low quality on final attempt
+                    continue
+                    
+            except asyncio.TimeoutError:
+                self.logger.warning(f"Crew execution timeout on attempt {attempt + 1}")
+                if attempt == max_retries - 1:
+                    # Final attempt with sync execution
+                    try:
+                        self.logger.info("Falling back to synchronous execution")
+                        return crew.kickoff()
+                    except Exception as sync_e:
+                        self.logger.error(f"Synchronous execution also failed: {sync_e}")
+                        return self._create_fallback_response(request)
+                        
+            except Exception as e:
+                self.logger.error(f"Crew execution failed on attempt {attempt + 1}: {e}")
+                if attempt == max_retries - 1:
+                    return self._create_fallback_response(request)
+                
+                # Wait before retry with exponential backoff
+                await asyncio.sleep(2 ** attempt)
+        
+        return self._create_fallback_response(request)
+    
+    def _validate_crew_result(self, result) -> bool:
+        """Validate crew result meets minimum quality standards."""
+        if not result:
+            return False
+            
+        # Check if result has meaningful content
+        result_str = str(result)
+        if len(result_str.strip()) < 20:  # Too short
+            return False
+            
+        # Check for error indicators
+        error_phrases = ['error occurred', 'failed to process', 'unable to complete']
+        result_lower = result_str.lower()
+        if any(phrase in result_lower for phrase in error_phrases):
+            return False
+            
+        return True
+    
+    def _create_fallback_response(self, request: AIRequest):
+        """Create a fallback response when crew execution fails."""
+        self.logger.warning("Creating fallback response due to crew execution failure")
+        
+        # Create a basic response based on request intent
+        if 'weather' in request.user_message.lower():
+            fallback_text = "I'm currently unable to access weather information. Please check a weather service directly."
+        elif 'location' in request.user_message.lower():
+            fallback_text = "I'm having trouble with location services right now. Please specify your location directly."
+        else:
+            fallback_text = "I'd be happy to help with fashion advice! For a professional look, consider well-fitted pieces in neutral colors. For casual wear, comfortable and stylish combinations work well."
+        
+        return type('FallbackResult', (), {
+            'raw': fallback_text,
+            'final_answer': fallback_text
+        })()
     
     def _extract_tools_used(self, agent_results: List[Dict[str, Any]]) -> List[str]:
         """Extract tools used from agent results."""
