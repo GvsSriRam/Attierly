@@ -1,11 +1,12 @@
 """
 User domain entities for Attierly.
+Migrated to Pydantic for automatic serialization and validation.
 """
 
-from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from enum import Enum
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class GenderPreference(Enum):
@@ -33,48 +34,50 @@ class BudgetRange(Enum):
     ANY = "any"
 
 
-@dataclass
-class UserProfile:
-    """User profile entity."""
+class UserProfile(BaseModel):
+    """User profile entity with automatic serialization."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
     user_id: str
     gender_preference: GenderPreference = GenderPreference.ANY
     style_preference: StylePreference = StylePreference.ANY
     budget_range: BudgetRange = BudgetRange.ANY
     location: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
-    preferences: Dict[str, Any] = field(default_factory=dict)
-    
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    preferences: Dict[str, Any] = Field(default_factory=dict)
+
     def update_preferences(self, **kwargs):
         """Update user preferences."""
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now()
 
 
-@dataclass
-class UserSession:
-    """User session entity."""
+class UserSession(BaseModel):
+    """User session entity with automatic serialization."""
+
     session_id: str
     user_id: str
-    current_context: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    last_activity: datetime = field(default_factory=datetime.utcnow)
-    
+    current_context: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=datetime.now)
+    last_activity: datetime = Field(default_factory=datetime.now)
+
     def update_context(self, context: Dict[str, Any]):
         """Update session context."""
         self.current_context.update(context)
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now()
 
 
-@dataclass
-class UserFeedback:
-    """User feedback entity."""
+class UserFeedback(BaseModel):
+    """User feedback entity with automatic serialization."""
+
     feedback_id: str
     user_id: str
     recommendation_id: str
     rating: int  # 1-5 scale
     liked: bool
     feedback_text: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow) 
+    created_at: datetime = Field(default_factory=datetime.now)

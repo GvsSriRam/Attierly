@@ -7,9 +7,6 @@ import asyncio
 from unittest.mock import Mock, AsyncMock
 from typing import Dict, Any
 
-# Test configuration
-pytest_plugins = ["pytest_asyncio"]
-
 
 @pytest.fixture(scope="session")
 def event_loop():

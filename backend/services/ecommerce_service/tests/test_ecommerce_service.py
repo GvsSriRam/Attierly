@@ -5,63 +5,65 @@ Tests for E-commerce Service implementation.
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any, List
+from uuid import uuid4
 
 from services.ecommerce_service.application.use_cases import (
     WebScrapingSearchUseCase,
     WebScrapingRecommendationsUseCase,
     WebScrapingProductDetailsUseCase
 )
-from services.ecommerce_service.domain.entities import Product, ProductSearchRequest, ProductRecommendationRequest
+from services.ecommerce_service.domain.entities import (
+    Product, ProductSearchRequest, ProductRecommendationRequest,
+    ProductCategory, ProductSource, SearchType, RecommendationType
+)
 from services.ecommerce_service.infrastructure.product_scraper import EcommerceService
 
 
 class TestProduct:
     """Test Product entity."""
-    
+
     def test_product_creation(self):
         """Test creating a product."""
+        product_id = uuid4()
         product = Product(
-            id="prod_123",
+            id=product_id,
             name="Casual Summer Dress",
             description="A comfortable summer dress",
             price=49.99,
             currency="USD",
-            category="dresses",
+            category=ProductCategory.CLOTHING,
             brand="Fashion Brand",
             image_url="https://example.com/dress.jpg",
             product_url="https://example.com/product/123",
+            source=ProductSource.AMAZON,
             availability=True,
             sizes=["XS", "S", "M", "L", "XL"],
             colors=["blue", "red", "green"]
         )
-        
-        assert product.id == "prod_123"
+
+        assert product.id == product_id
         assert product.name == "Casual Summer Dress"
         assert product.description == "A comfortable summer dress"
         assert product.price == 49.99
         assert product.currency == "USD"
-        assert product.category == "dresses"
+        assert product.category == ProductCategory.CLOTHING.value
         assert product.brand == "Fashion Brand"
         assert product.image_url == "https://example.com/dress.jpg"
         assert product.product_url == "https://example.com/product/123"
+        assert product.source == ProductSource.AMAZON.value
         assert product.availability is True
         assert product.sizes == ["XS", "S", "M", "L", "XL"]
         assert product.colors == ["blue", "red", "green"]
-    
+
     def test_product_defaults(self):
         """Test product with default values."""
-        product = Product(
-            id="prod_123",
-            name="Test Product",
-            price=29.99
-        )
-        
-        assert product.id == "prod_123"
-        assert product.name == "Test Product"
-        assert product.price == 29.99
+        product = Product()
+
+        assert product.name == ""
+        assert product.price == 0.0
         assert product.currency == "USD"
-        assert product.category == "general"
-        assert product.brand == "Unknown"
+        assert product.category == ProductCategory.OTHER.value
+        assert product.source == ProductSource.MANUAL.value
         assert product.availability is True
         assert product.sizes == []
         assert product.colors == []
@@ -69,41 +71,41 @@ class TestProduct:
 
 class TestProductSearchRequest:
     """Test ProductSearchRequest entity."""
-    
+
     def test_search_request_creation(self):
         """Test creating a search request."""
         request = ProductSearchRequest(
             query="casual dress",
-            category="dresses",
-            price_min=20.0,
-            price_max=100.0,
-            brand="Fashion Brand",
-            size="M",
-            color="blue",
-            limit=20
+            limit=20,
+            filters={
+                "category": "dresses",
+                "price_min": 20.0,
+                "price_max": 100.0,
+                "brand": "Fashion Brand",
+                "size": "M",
+                "color": "blue"
+            },
+            search_type=SearchType.KEYWORD
         )
-        
+
         assert request.query == "casual dress"
-        assert request.category == "dresses"
-        assert request.price_min == 20.0
-        assert request.price_max == 100.0
-        assert request.brand == "Fashion Brand"
-        assert request.size == "M"
-        assert request.color == "blue"
         assert request.limit == 20
-    
+        assert request.filters["category"] == "dresses"
+        assert request.filters["price_min"] == 20.0
+        assert request.filters["price_max"] == 100.0
+        assert request.filters["brand"] == "Fashion Brand"
+        assert request.filters["size"] == "M"
+        assert request.filters["color"] == "blue"
+        assert request.search_type == SearchType.KEYWORD
+
     def test_search_request_defaults(self):
         """Test search request with default values."""
         request = ProductSearchRequest(query="test")
-        
+
         assert request.query == "test"
-        assert request.category is None
-        assert request.price_min is None
-        assert request.price_max is None
-        assert request.brand is None
-        assert request.size is None
-        assert request.color is None
         assert request.limit == 10
+        assert request.filters == {}
+        assert request.search_type == SearchType.KEYWORD
 
 
 class TestProductRecommendationRequest:

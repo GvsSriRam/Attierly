@@ -26,9 +26,9 @@ class TestUserProfile:
         )
         
         assert profile.user_id == "test_user"
-        assert profile.gender_preference == GenderPreference.FEMALE
-        assert profile.style_preference == StylePreference.CASUAL
-        assert profile.budget_range == BudgetRange.MEDIUM
+        assert profile.gender_preference == GenderPreference.FEMALE.value
+        assert profile.style_preference == StylePreference.CASUAL.value
+        assert profile.budget_range == BudgetRange.MEDIUM.value
         assert profile.location is None
         assert isinstance(profile.created_at, datetime)
         assert isinstance(profile.updated_at, datetime)
@@ -151,9 +151,9 @@ class TestUserRepository:
         # Verify result
         assert profile is not None
         assert profile.user_id == "test_user"
-        assert profile.gender_preference == GenderPreference.FEMALE
-        assert profile.style_preference == StylePreference.CASUAL
-        assert profile.budget_range == BudgetRange.MEDIUM
+        assert profile.gender_preference == GenderPreference.FEMALE.value
+        assert profile.style_preference == StylePreference.CASUAL.value
+        assert profile.budget_range == BudgetRange.MEDIUM.value
         assert profile.location == "NYC"
         
         # Verify storage was called

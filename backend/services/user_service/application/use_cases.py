@@ -140,27 +140,31 @@ class GetUserContextUseCase:
         """Execute the get user context use case."""
         try:
             self.logger.info(f"Getting user context for user_id: {user_id}")
-            
+
             profile = await self.user_repo.get_profile(user_id)
-            
+            session = await self.user_repo.get_session(user_id)
+
             if not profile:
                 self.logger.warning(f"User profile not found for user_id: {user_id}")
-                return {"context": {}}
-            
+                return {"user_id": user_id, "session_context": {}}
+
+            # Serialize enum values
             context = {
-                "gender_preference": profile.gender_preference,
-                "style_preference": profile.style_preference,
-                "budget_range": profile.budget_range,
-                "location": profile.location
+                "user_id": profile.user_id,
+                "gender_preference": profile.gender_preference.value if hasattr(profile.gender_preference, 'value') else profile.gender_preference,
+                "style_preference": profile.style_preference.value if hasattr(profile.style_preference, 'value') else profile.style_preference,
+                "budget_range": profile.budget_range.value if hasattr(profile.budget_range, 'value') else profile.budget_range,
+                "location": profile.location,
+                "session_context": session.current_context if session else {}
             }
-            
-            self.logger.info(f"Retrieved user context for user_id: {user_id}: {context}")
-            
-            return {"context": context}
-            
+
+            self.logger.info(f"Retrieved user context for user_id: {user_id}")
+
+            return context
+
         except Exception as e:
             self.logger.error(f"Error getting user context: {e}")
-            return {"context": {}}
+            return {"user_id": user_id, "session_context": {}}
 
 class AddUserFeedbackUseCase:
     """Use case for adding user feedback."""
@@ -173,30 +177,35 @@ class AddUserFeedbackUseCase:
         """Execute the add user feedback use case."""
         try:
             self.logger.info(f"Adding user feedback for user_id: {user_id}")
-            
+
+            # Generate feedback ID if not provided
+            import uuid
+            feedback_id = feedback_data.get("feedback_id", str(uuid.uuid4()))
+
             feedback = UserFeedback(
+                feedback_id=feedback_id,
                 user_id=user_id,
-                session_id=feedback_data.get("session_id"),
-                message=feedback_data.get("message"),
+                recommendation_id=feedback_data.get("recommendation_id"),
                 rating=feedback_data.get("rating"),
-                feedback_type=feedback_data.get("feedback_type"),
-                created_at=datetime.now()
+                liked=feedback_data.get("liked", False),
+                feedback_text=feedback_data.get("feedback_text")
             )
-            
+
             # Save to repository
             await self.user_repo.add_feedback(feedback)
-            
+
             self.logger.info(f"Successfully added user feedback for user_id: {user_id}")
-            
+
             return {
+                "feedback_id": feedback.feedback_id,
                 "user_id": feedback.user_id,
-                "session_id": feedback.session_id,
-                "message": feedback.message,
+                "recommendation_id": feedback.recommendation_id,
                 "rating": feedback.rating,
-                "feedback_type": feedback.feedback_type,
+                "liked": feedback.liked,
+                "feedback_text": feedback.feedback_text,
                 "created_at": feedback.created_at.isoformat()
             }
-            
+
         except Exception as e:
             self.logger.error(f"Error adding user feedback: {e}")
             raise 
